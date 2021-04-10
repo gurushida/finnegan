@@ -20,6 +20,8 @@ class Token(Enum):
     STOP = 'stop'
     SYSTEM = 'system'
     QUIT = 'quit'
+    YES = 'yes'
+    NO = 'no'
 
     PLAYER = 'player'
     PLAYERS = 'players'
@@ -55,7 +57,7 @@ class Token(Enum):
 # Here are some alternate sequences found by trial and error
 ALTERNATE_TOKENS = {
     Token.FINNEGAN: ['then again', 'in again', 'it again', 'philly damn', 'phil again', 'can again', 'finn again', 'he again',
-                    'fun again'],
+                    'fun again', 'filling and'],
     Token.PAUSE: ['pose', 'post', 'posts', 'polls', 'both', 'foes'],
     Token.NEW: ['near'],
     Token.QUIT: ['quits'],
@@ -69,6 +71,100 @@ ALTERNATE_TOKENS = {
                    'the whole', 'devil', 'dublin', 'the will'],
     Token.TRIPLE: ['people', 'drupal', 'treble', 'dribble'],
     Token.BULLSEYE: ['bull\'s eye', 'bowles eye']
+}
+
+
+class Command(Enum):
+    FINNEGAN_NEW_GAME = 'finnegan new game'
+    FINNEGAN_START_GAME = 'finnegan start game'
+    FINNEGAN_STOP_GAME = 'finnegan stop game'
+    FINNEGAN_PAUSE_GAME = 'finnegan pause game'
+    FINNEGAN_CONTINUE_GAME = 'finnegan continue game'
+    FINNEGAN_QUIT = 'finnegan quit'
+    FINNEGAN_CORRECTION = 'finnegan correction'
+
+    ONE_PLAYER = 'one player'
+    TWO_PLAYERS = 'two players'
+    THREE_PLAYERS = 'three players'
+    FOUR_PLAYERS = 'four players'
+    FIVE_PLAYERS = 'five players'
+    SIX_PLAYERS = 'six players'
+    SEVEN_PLAYERS = 'seven players'
+    EIGHT_PLAYERS = 'eight players'
+    NINE_PLAYERS = 'nine players'
+    TEN_PLAYERS = 'ten players'
+
+    ZERO = 'zero'
+
+    ONE = 'one'
+    TWO = 'two'
+    THREE = 'three'
+    FOUR = 'four'
+    FIVE = 'five'
+    SIX = 'six'
+    SEVEN = 'seven'
+    EIGHT = 'eight'
+    NINE = 'nine'
+    TEN = 'ten'
+    ELEVEN = 'eleven'
+    TWELVE = 'twelve'
+    THIRTEEN = 'thirteen'
+    FOURTEEN = 'fourteen'
+    FIFTEEN = 'fifteen'
+    SIXTEEN = 'sixteen'
+    SEVENTEEN = 'seventeen'
+    EIGHTEEN = 'eighteen'
+    NINETEEN = 'nineteen'
+    TWENTY = 'twenty'
+    TWENTY_FIVE = 'twenty five'
+    FIFTY = 'fifty'
+
+    DOUBLE_ONE = 'double one'
+    DOUBLE_TWO = 'double two'
+    DOUBLE_THREE = 'double three'
+    DOUBLE_FOUR = 'double four'
+    DOUBLE_FIVE = 'double five'
+    DOUBLE_SIX = 'double six'
+    DOUBLE_SEVEN = 'double seven'
+    DOUBLE_EIGHT = 'double eight'
+    DOUBLE_NINE = 'double nine'
+    DOUBLE_TEN = 'double ten'
+    DOUBLE_ELEVEN = 'double eleven'
+    DOUBLE_TWELVE = 'double twelve'
+    DOUBLE_THIRTEEN = 'double thirteen'
+    DOUBLE_FOURTEEN = 'double fourteen'
+    DOUBLE_FIFTEEN = 'double fifteen'
+    DOUBLE_SIXTEEN = 'double sixteen'
+    DOUBLE_SEVENTEEN = 'double seventeen'
+    DOUBLE_EIGHTEEN = 'double eighteen'
+    DOUBLE_NINETEEN = 'double nineteen'
+    DOUBLE_TWENTY = 'double twenty'
+
+    TRIPLE_ONE = 'triple one'
+    TRIPLE_TWO = 'triple two'
+    TRIPLE_THREE = 'triple three'
+    TRIPLE_FOUR = 'triple four'
+    TRIPLE_FIVE = 'triple five'
+    TRIPLE_SIX = 'triple six'
+    TRIPLE_SEVEN = 'triple seven'
+    TRIPLE_EIGHT = 'triple eight'
+    TRIPLE_NINE = 'triple nine'
+    TRIPLE_TEN = 'triple ten'
+    TRIPLE_ELEVEN = 'triple eleven'
+    TRIPLE_TWELVE = 'triple twelve'
+    TRIPLE_THIRTEEN = 'triple thirteen'
+    TRIPLE_FOURTEEN = 'triple fourteen'
+    TRIPLE_FIFTEEN = 'triple fifteen'
+    TRIPLE_SIXTEEN = 'triple sixteen'
+    TRIPLE_SEVENTEEN = 'triple seventeen'
+    TRIPLE_EIGHTEEN = 'triple eighteen'
+    TRIPLE_NINETEEN = 'triple nineteen'
+    TRIPLE_TWENTY = 'triple twenty'
+
+
+ALTERNATE_COMMANDS = {
+    Command.ONE_PLAYER: ['single player'],
+    Command.FIFTY: ['bullseye'],
 }
 
 
@@ -97,6 +193,26 @@ def readToken(speech_tokens, recognized_tokens):
     return False
 
 
+def readCommand(recognized_tokens, recognized_commands):
+    if len(recognized_tokens) == 0:
+        return False
+
+    for command in Command:
+        possible_sequences = [command.value]
+        if command in ALTERNATE_COMMANDS:
+            possible_sequences += ALTERNATE_COMMANDS[command]
+        for sequence in possible_sequences:
+            split_sequence = sequence.split()
+            n = len(split_sequence)
+            if split_sequence == recognized_tokens[0:n]:
+                recognized_commands.append(command)
+                del recognized_tokens[:n]
+                return True
+
+    return False
+
+
+
 def processText(text):
     """Analyzes the content of a speech chunk that was recognized
     to try to find commands in it"""
@@ -114,13 +230,24 @@ def processText(text):
         # If we failed to analyze the entire input, we bail out
         return
 
-    print('Recognized token: %s' % list(map(lambda t: t.value, recognized_tokens)))
+    token_sequence = list(map(lambda t: t.value, recognized_tokens))
+    print('Recognized tokens: %s' % token_sequence)
+
+    recognized_commands = []
+    while readCommand(token_sequence, recognized_commands):
+        pass
+
+    if len(token_sequence) > 0:
+        # If we failed to analyze the entire token sequence, we bail out
+        return
+
+    print('Recognized commands: %s' % list(map(lambda t: t.value, recognized_commands)))
+
 
 
 #-----------------------------------------------------
 # Below is the code adapted from the https://github.com/alphacep/vosk-api/blob/master/python/example/test_microphone.py
-# exmaple program that listens from the microphone and feeds the
-# processText function
+# example program that listens from the microphone and feeds the processText function
 
 q = queue.Queue()
 
