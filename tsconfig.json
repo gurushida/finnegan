@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+      "sourceMap": true,
+      "target": "esnext",
+      "skipDefaultLibCheck": true,
+      "allowSyntheticDefaultImports": true,
+      "experimentalDecorators": true,
+      "esModuleInterop": true,
+      "moduleResolution": "node",
+      "noUnusedLocals": true,
+      "resolveJsonModule": true,
+      "outDir": ".",
+      "rootDir": ".",
+      "baseUrl": ".",
+      "lib": [
+        "esnext",
+        "dom",
+      ],
+      "strict": true,
+      "types": []
+    },
+    "include": [
+      "*.ts",
+    ],
+    "exclude": [
+      "node_modules"
+    ],
+  }
+  

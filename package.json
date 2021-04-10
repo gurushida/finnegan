@@ -1,0 +1,18 @@
+{
+    "name": "finnegan",
+    "version": "0.1.0",
+    "author": "gurushida",
+    "description": "A dart scoring system controlled by voice recognition",
+    "scripts": {
+        "preinstall": ". install_dependencies.sh",
+        "prestart": "esbuild --outdir=. --target=node14 --bundle --platform=node --minify --tsconfig=./tsconfig.json finnegan.ts",
+        "start": "node finnegan.js"
+    },
+    "dependencies": {
+        "@types/readline-sync": "^1.4.3"
+    },
+    "devDependencies": {
+        "@types/node": "^14.14.37",
+        "esbuild": "^0.8.42"
+    }
+}

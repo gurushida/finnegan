@@ -16,12 +16,17 @@ class Token(Enum):
     GAME = 'game'
     PAUSE = 'pause'
     CONTINUE = 'continue'
-    START = 'start'
+    BEGIN = 'begin'
     STOP = 'stop'
-    SYSTEM = 'system'
     QUIT = 'quit'
+    NEXT = 'next'
+    CORRECTION = 'correction'
     YES = 'yes'
     NO = 'no'
+
+    EXPERT = 'expert'
+    MEDIUM = 'medium'
+    EASY = 'easy'
 
     PLAYER = 'player'
     PLAYERS = 'players'
@@ -51,22 +56,25 @@ class Token(Enum):
     TRIPLE = 'triple'
     BULLSEYE = 'bullseye'
     FIFTY = 'fifty'
-    CORRECTION = 'correction'
 
 # Vosk does a great job but sometimes it recognizes the wrong words
 # Here are some alternate sequences found by trial and error
 ALTERNATE_TOKENS = {
     Token.FINNEGAN: ['then again', 'in again', 'it again', 'philly damn', 'phil again', 'can again', 'finn again', 'he again',
-                    'fun again', 'filling and'],
+                    'fun again', 'filling and', 'seen again', 'and again', 'she again'],
     Token.PAUSE: ['pose', 'post', 'posts', 'polls', 'both', 'foes'],
     Token.NEW: ['near'],
     Token.QUIT: ['quits'],
+    Token.EXPERT: ['expect', 'expects', 'experts', 'expense'],
+    Token.MEDIUM: ['median'],
+    Token.EASY: ['he\'s he'],
     Token.ZERO: ['the euro', 'hero'],
     Token.TWO: ['to'],
     Token.FOUR: ['for'],
     Token.TEN: ['town', 'down', 'turn'],
     Token.EIGHTEEN: ['eighty'],
     Token.NINETEEN: ['ninety'],
+    Token.FIFTY: ['shifty'],
     Token.DOUBLE: ['doubled', 'dabbled', 'babel', 'the ball', 'the bowl', 'that will', 'they will', 'the old',
                    'the whole', 'devil', 'dublin', 'the will'],
     Token.TRIPLE: ['people', 'drupal', 'treble', 'dribble'],
@@ -76,12 +84,20 @@ ALTERNATE_TOKENS = {
 
 class Command(Enum):
     FINNEGAN_NEW_GAME = 'finnegan new game'
-    FINNEGAN_START_GAME = 'finnegan start game'
+    BEGIN = 'begin'
+    NEXT = 'next'
     FINNEGAN_STOP_GAME = 'finnegan stop game'
     FINNEGAN_PAUSE_GAME = 'finnegan pause game'
     FINNEGAN_CONTINUE_GAME = 'finnegan continue game'
     FINNEGAN_QUIT = 'finnegan quit'
     FINNEGAN_CORRECTION = 'finnegan correction'
+
+    EXPERT = 'expert'
+    MEDIUM = 'medium'
+    EASY = 'easy'
+
+    YES = 'yes'
+    NO = 'no'
 
     ONE_PLAYER = 'one player'
     TWO_PLAYERS = 'two players'

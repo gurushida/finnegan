@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 model/
+.DS_Store
+finnegan.js
