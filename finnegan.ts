@@ -149,6 +149,15 @@ function render() {
 }
 
 function printScoreBoard() {
+    const difficultyMsgs = [
+        'Expert mode - need to start and finish with a double',
+        'Medium mode - need to finish with a double',
+        'Easy mode - as long as you end up exactly at 0, you\'re good',
+    ];
+
+    console.log(difficultyMsgs[difficulty]);
+    console.log();
+
     for (let i = 0 ; i < number_of_players ; i++) {
         const cur = i === current_player;
         console.log(`${cur ? ' => ' : '    '}${player_statuses[i].name}: ${cur ? player_statuses[i].tentative_score : player_statuses[i].score}`);
@@ -209,21 +218,26 @@ function printScoreBoard() {
     }
 
     console.log();
-    console.log();
-    console.log('Commands:');
-    console.log();
-    console.log('   "guinness correction"      => reset the darts for the current turn');
-    console.log('   "guinness pause game"      => stop listening for inputs until the game is resumed');
-    console.log('   "guinness continue game"   => resume listening for inputs');
-    console.log('   "guinness stop game"       => stop the current game');
-    console.log('   "guinness quit"            => quit the program');
-    console.log();
-    console.log('Reporting points:');
-    console.log('   "fifty"                    => when you hit the bullseye');
-    console.log('   "twenty five"              => when you hit the 25 point area around the bullseye');
-    console.log('   "triple twelve"            => when you hit a number in its triple area');
-    console.log('   "double twelve"            => when you hit a number in its double area');
-    console.log('   "twelve"                   => when you hit a number in normal area');
+
+    if (current_state !== 'GAME_WON' && current_state !== 'GAME_PAUSED'
+        && current_state !== 'WAITING_QUIT_CONFIRMATION'
+        && current_state !== 'WAITING_STOP_GAME_CONFIRMATION') {
+        console.log();
+        console.log('Commands:');
+        console.log();
+        console.log('   "guinness correction"      => reset the darts for the current turn');
+        console.log('   "guinness pause game"      => stop listening for inputs until the game is resumed');
+        console.log('   "guinness continue game"   => resume listening for inputs');
+        console.log('   "guinness stop game"       => stop the current game');
+        console.log('   "guinness quit"            => quit the program');
+        console.log();
+        console.log('Reporting points:');
+        console.log('   "fifty"                    => when you hit the bullseye');
+        console.log('   "twenty five"              => when you hit the 25 point area around the bullseye');
+        console.log('   "triple twelve"            => when you hit a number in its triple area');
+        console.log('   "double twelve"            => when you hit a number in its double area');
+        console.log('   "twelve"                   => when you hit a number in normal area');
+    }
 }
 
 
@@ -357,8 +371,6 @@ function initGame() {
  * Returns true if the event was processed; false if it was ignored.
  */
 function processEvent(event: Event): boolean {
-    console.log(`state=${current_state}, event=${JSON.stringify(event)}`);
-
     // We want to allow quitting from any state except if we are already waiting
     // for a yes/no answer or if the game is paused
     if (event.type === 'QUIT') {
@@ -432,6 +444,17 @@ function processEvent(event: Event): boolean {
                     current_state = 'WAITING_FOR_SCORE_DART_2';
                     return true;
                 }
+                if (dart_1.score === tentative_score - 1) {
+                    if (difficulty !== Difficulty.EASY) {
+                        // If we need a double to finish, ending up with 1 is illegal
+                        dart_1.ignored = true;
+                        current_state = 'WAITING_FOR_SCORE_DART_2';
+                        return true;
+                    }
+                    player_statuses[current_player].tentative_score = 1;
+                    current_state = 'WAITING_FOR_SCORE_DART_2';
+                    return true;
+                }
                 if (dart_1.score === tentative_score) {
                     if (difficulty !== Difficulty.EASY && !dart_1.is_double) {
                         // If we need a double to finish and haven't got one, we ignore the dart
@@ -492,6 +515,17 @@ function processEvent(event: Event): boolean {
                 if (dart_2.score > tentative_score) {
                     // If the dart would make the score be negative, we have to ignore it
                     dart_2.ignored = true;
+                    current_state = 'WAITING_FOR_SCORE_DART_3';
+                    return true;
+                }
+                if (dart_2.score === tentative_score - 1) {
+                    if (difficulty !== Difficulty.EASY) {
+                        // If we need a double to finish, ending up with 1 is illegal
+                        dart_2.ignored = true;
+                        current_state = 'WAITING_FOR_SCORE_DART_3';
+                        return true;
+                    }
+                    player_statuses[current_player].tentative_score = 1;
                     current_state = 'WAITING_FOR_SCORE_DART_3';
                     return true;
                 }
@@ -561,6 +595,17 @@ function processEvent(event: Event): boolean {
                     // If the dart would make the score be negative, we have to ignore it
                     dart_3.ignored = true;
                     current_state = 'WAITING_FOR_END_OF_TURN';
+                    return true;
+                }
+                if (dart_3.score === tentative_score - 1) {
+                    if (difficulty !== Difficulty.EASY) {
+                        // If we need a double to finish, ending up with 1 is illegal
+                        dart_3.ignored = true;
+                        current_state = 'WAITING_FOR_END_OF_TURN';
+                        return true;
+                    }
+                    player_statuses[current_player].tentative_score = 1;
+                    current_state = 'WAITING_FOR_SCORE_DART_3';
                     return true;
                 }
                 if (dart_3.score === tentative_score) {

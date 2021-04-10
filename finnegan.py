@@ -60,8 +60,9 @@ class Token(Enum):
 # Vosk does a great job but sometimes it recognizes the wrong words
 # Here are some alternate sequences found by trial and error
 ALTERNATE_TOKENS = {
+    Token.GUINNESS: ['get us', 'give us'],
     Token.PAUSE: ['pose', 'post', 'posts', 'polls', 'both', 'foes'],
-    Token.NEW: ['near', 'you'],
+    Token.NEW: ['near', 'you', 'your'],
     Token.QUIT: ['quits'],
     Token.STOP: ['stopped', 'stump'],
     Token.EXPERT: ['expect', 'expects', 'experts', 'expense'],
@@ -70,7 +71,9 @@ ALTERNATE_TOKENS = {
     Token.ZERO: ['the euro', 'hero'],
     Token.TWO: ['to'],
     Token.FOUR: ['for'],
+    Token.EIGHT: ['hate'],
     Token.TEN: ['town', 'down', 'turn'],
+    Token.ELEVEN: ['levin', 'live in'],
     Token.EIGHTEEN: ['eighty'],
     Token.NINETEEN: ['ninety'],
     Token.FIFTY: ['shifty'],
