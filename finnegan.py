@@ -219,7 +219,6 @@ def processText(text):
     if text == '':
         return
 
-    print('Heard: "%s"' % text)
     speech_tokens = text.split()
 
     recognized_tokens = []
@@ -228,10 +227,10 @@ def processText(text):
 
     if len(speech_tokens) > 0:
         # If we failed to analyze the entire input, we bail out
+        print("???:%s" % text)
         return
 
     token_sequence = list(map(lambda t: t.value, recognized_tokens))
-    print('Recognized tokens: %s' % token_sequence)
 
     recognized_commands = []
     while readCommand(token_sequence, recognized_commands):
@@ -239,9 +238,12 @@ def processText(text):
 
     if len(token_sequence) > 0:
         # If we failed to analyze the entire token sequence, we bail out
+        print("???:%s" % text)
         return
 
-    print('Recognized commands: %s' % list(map(lambda t: t.value, recognized_commands)))
+    commands = list(map(lambda t: t.value, recognized_commands))
+    for command in commands:
+        print("CMD:%s" % command)
 
 
 
