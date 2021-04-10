@@ -94,7 +94,7 @@ function render() {
 
     switch(current_state) {
         case 'NOT_PLAYING': {
-            console.log('Say "finnegan new game" to start or "finnegan quit" to quit');
+            console.log('Say "guinness new game" to start or "guinness quit" to quit');
             break;
         }
         case 'WAITING_FOR_START': {
@@ -111,10 +111,10 @@ function render() {
             console.log();
             console.log(`Number of players (change by saying what you want):`);
             for (let i = 1 ; i <= 10 ; i++) {
-                console.log(`${i === number_of_players ? ' => ' : '    '}${i === 10 ? '' : ' '}${i} player${i > 1 ? 's' : ''}`);
+                console.log(`${i === number_of_players ? ' => ' : '    '}${i === 10 ? '' : ' '}"${i} player${i > 1 ? 's' : ''}"`);
             }
             console.log();
-            console.log('Say "begin" to start the game');
+            console.log('Say "guinness begin" to start the game');
             break;
         }
         default: {
@@ -124,14 +124,14 @@ function render() {
             }
             if (current_state === 'GAME_PAUSED') {
                 console.log();
-                console.log('Game paused. Say "finnegan continue game" to resume');
+                console.log('Game paused. Say "guinness continue game" to resume');
                 break;
             }
             if (current_state === 'GAME_WON') {
                 console.log();
                 console.log(`${player_statuses[current_player].name} won !`);
                 console.log();
-                console.log('Say "finnegan new game" to start a new game or "finnegan quit" to quit');
+                console.log('Say "guinness new game" to start a new game or "guinness quit" to quit');
                 break;
             }
             if (current_state === 'WAITING_QUIT_CONFIRMATION') {
@@ -205,25 +205,25 @@ function printScoreBoard() {
         console.log(`Dart 2: ${dart_2!.ignored ? 'ignored' : dart_2!.score} (${dart_2!.description})`);
         console.log(`Dart 3: ${dart_3!.ignored ? 'ignored' : dart_3!.score} (${dart_3!.description})`);
         console.log();
-        console.log('Say "next" to move on the next player\'s turn');
+        console.log('Say "guinness next" to move on the next player\'s turn');
     }
 
     console.log();
     console.log();
     console.log('Commands:');
     console.log();
-    console.log('   "finnegann correction"      => reset the darts for the current turn');
-    console.log('   "finnegann pause game"      => stop listening for inputs until the game is resumed');
-    console.log('   "finnegann continue game"   => resume listening for inputs');
-    console.log('   "finnegann stop game"       => stop the current game');
-    console.log('   "finnegann quit"            => quit the program');
+    console.log('   "guinness correction"      => reset the darts for the current turn');
+    console.log('   "guinness pause game"      => stop listening for inputs until the game is resumed');
+    console.log('   "guinness continue game"   => resume listening for inputs');
+    console.log('   "guinness stop game"       => stop the current game');
+    console.log('   "guinness quit"            => quit the program');
     console.log();
     console.log('Reporting points:');
-    console.log('   "fifty"                     => when you hit the bullseye');
-    console.log('   "twenty five"               => when you hit the 25 point area around the bullseye');
-    console.log('   "triple twelve"             => when you hit a number in its triple area');
-    console.log('   "double twelve"             => when you hit a number in its double area');
-    console.log('   "twelve"                    => when you hit a number in normal area');
+    console.log('   "fifty"                    => when you hit the bullseye');
+    console.log('   "twenty five"              => when you hit the 25 point area around the bullseye');
+    console.log('   "triple twelve"            => when you hit a number in its triple area');
+    console.log('   "double twelve"            => when you hit a number in its double area');
+    console.log('   "twelve"                   => when you hit a number in normal area');
 }
 
 
@@ -234,14 +234,14 @@ function processUnrecognizedInput(text: string) {
 
 function processCommand(cmd: string) {
     switch (cmd) {
-        case 'finnegan new game': processEvent({type: 'NEW_GAME'}); break;
-        case 'begin': processEvent({type: 'START_GAME'}); break;
-        case 'next': processEvent({type: 'NEXT_TURN'}); break;
-        case 'finnegan stop game': processEvent({type: 'STOP_GAME'}); break;
-        case 'finnegan pause game': processEvent({type: 'PAUSE_GAME'}); break;
-        case 'finnegan continue game': processEvent({type: 'CONTINUE_GAME'}); break;
-        case 'finnegan quit': processEvent({type: 'QUIT'}); break;
-        case 'finnegan correction': processEvent({type: 'CORRECTION'}); break;
+        case 'guinness new game': processEvent({type: 'NEW_GAME'}); break;
+        case 'guinness stop game': processEvent({type: 'STOP_GAME'}); break;
+        case 'guinness pause game': processEvent({type: 'PAUSE_GAME'}); break;
+        case 'guinness continue game': processEvent({type: 'CONTINUE_GAME'}); break;
+        case 'guinness quit': processEvent({type: 'QUIT'}); break;
+        case 'guinness correction': processEvent({type: 'CORRECTION'}); break;
+        case 'guinness begin': processEvent({type: 'START_GAME'}); break;
+        case 'guinness next': processEvent({type: 'NEXT_TURN'}); break;
 
         case 'yes': processEvent({type: 'ANSWER', value: Answer.YES}); break;
         case 'no': processEvent({type: 'ANSWER', value: Answer.NO}); break;

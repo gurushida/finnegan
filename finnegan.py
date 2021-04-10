@@ -11,7 +11,7 @@ from enum import Enum
 
 
 class Token(Enum):
-    FINNEGAN = 'finnegan'
+    GUINNESS = 'guinness'
     NEW = 'new'
     GAME = 'game'
     PAUSE = 'pause'
@@ -60,14 +60,13 @@ class Token(Enum):
 # Vosk does a great job but sometimes it recognizes the wrong words
 # Here are some alternate sequences found by trial and error
 ALTERNATE_TOKENS = {
-    Token.FINNEGAN: ['then again', 'in again', 'it again', 'philly damn', 'phil again', 'can again', 'finn again', 'he again',
-                    'fun again', 'filling and', 'seen again', 'and again', 'she again'],
     Token.PAUSE: ['pose', 'post', 'posts', 'polls', 'both', 'foes'],
-    Token.NEW: ['near'],
+    Token.NEW: ['near', 'you'],
     Token.QUIT: ['quits'],
+    Token.STOP: ['stopped', 'stump'],
     Token.EXPERT: ['expect', 'expects', 'experts', 'expense'],
     Token.MEDIUM: ['median'],
-    Token.EASY: ['he\'s he'],
+    Token.EASY: ['he\'s he', 'he\'s'],
     Token.ZERO: ['the euro', 'hero'],
     Token.TWO: ['to'],
     Token.FOUR: ['for'],
@@ -83,14 +82,14 @@ ALTERNATE_TOKENS = {
 
 
 class Command(Enum):
-    FINNEGAN_NEW_GAME = 'finnegan new game'
-    BEGIN = 'begin'
-    NEXT = 'next'
-    FINNEGAN_STOP_GAME = 'finnegan stop game'
-    FINNEGAN_PAUSE_GAME = 'finnegan pause game'
-    FINNEGAN_CONTINUE_GAME = 'finnegan continue game'
-    FINNEGAN_QUIT = 'finnegan quit'
-    FINNEGAN_CORRECTION = 'finnegan correction'
+    GUINNESS_NEW_GAME = 'guinness new game'
+    GUINNESS_STOP_GAME = 'guinness stop game'
+    GUINNESS_PAUSE_GAME = 'guinness pause game'
+    GUINNESS_CONTINUE_GAME = 'guinness continue game'
+    GUINNESS_QUIT = 'guinness quit'
+    GUINNESS_CORRECTION = 'guinness correction'
+    GUINNESS_BEGIN = 'guinness begin'
+    GUINNESS_NEXT = 'guinness next'
 
     EXPERT = 'expert'
     MEDIUM = 'medium'
