@@ -4,7 +4,7 @@
     "author": "gurushida",
     "description": "A dart scoring system controlled by voice recognition",
     "scripts": {
-        "preinstall": ". install_dependencies.sh",
+        "preinstall": "./install_dependencies.sh",
         "prestart": "esbuild --outdir=. --target=node14 --bundle --platform=node --minify --tsconfig=./tsconfig.json finnegan.ts",
         "start": "node finnegan.js"
     },
