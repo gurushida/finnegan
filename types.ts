@@ -2,7 +2,7 @@
  * The VoiceCommand type describes all the supported commands that can be sent
  * by fart.py
  */
-const voiceCommands = [
+export const voiceCommands = [
     'NEW_GAME',
     'STOP_GAME',
     'PAUSE_GAME',
@@ -92,11 +92,38 @@ const voiceCommands = [
 ] as const;
 export type VoiceCommand = typeof voiceCommands[number];
 
-export enum Difficulty {
-    EXPERT = 0,
-    MEDIUM = 1,
-    EASY = 2,
-}
+/**
+ * In each game state, we want to describe the possible commands.
+ * Since there are many score commands, we use '<score>' as a special
+ * symbol indicating that any score command is accepted.
+ */
+export type PossibleCommand =
+    'NEW_GAME'
+    | 'STOP_GAME'
+    | 'PAUSE_GAME'
+    | 'CONTINUE_GAME'
+    | 'QUIT'
+    | 'CORRECTION'
+    | 'START_GAME'
+    | 'NEXT_TURN'
+    | 'ANSWER_YES'
+    | 'ANSWER_NO'
+    | 'SET_DIFFICULTY_EXPERT'
+    | 'SET_DIFFICULTY_MEDIUM'
+    | 'SET_DIFFICULTY_EASY'
+    | 'SET_PLAYER_COUNT_1'
+    | 'SET_PLAYER_COUNT_2'
+    | 'SET_PLAYER_COUNT_3'
+    | 'SET_PLAYER_COUNT_4'
+    | 'SET_PLAYER_COUNT_5'
+    | 'SET_PLAYER_COUNT_6'
+    | 'SET_PLAYER_COUNT_7'
+    | 'SET_PLAYER_COUNT_8'
+    | 'SET_PLAYER_COUNT_9'
+    | 'SET_PLAYER_COUNT_10'
+    | '<score>';
+
+export type Difficulty = 'expert' | 'medium' | 'easy';
 
 export enum Answer {
     NO = 0,
@@ -206,3 +233,19 @@ export interface PlayingState {
 }
 
 export type GameState = ValuelessGameState | WaitingForStartState | PlayingState;
+
+/**
+ * This represents the structure of the configuration files given to fart.py
+ */
+export interface FartConfig {
+    // The path to the vosk data model directory to use
+    "vosk_model_path": string;
+
+    // Associates to each symbolic token to recognize the list of strings
+    // that will be accepted from the output of the speech recognition process
+    tokens: Record<string, string[]>;
+
+    // Associates to each symbolic command to recognize the list of token symbols
+    // that will be accepted
+    patterns: Record<VoiceCommand, string[]>;
+}

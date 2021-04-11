@@ -1,8 +1,9 @@
 import * as child from 'child_process';
 import readline from 'readline';
 import { exit } from 'process';
-import { GameEvent, Difficulty, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
-    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, WaitingForStartState } from './types';
+import { readFileSync } from 'fs';
+import { GameEvent, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
+    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, WaitingForStartState, PossibleCommand, VoiceCommand, FartConfig, voiceCommands, Difficulty } from './types';
 
 
 let game: GameState = {
@@ -11,9 +12,45 @@ let game: GameState = {
 
 let playerStatusesLastRound: PlayerStatus[] = [];
 let lastNumberOfPlayers = 2;
-let lastDifficulty = Difficulty.EASY;
+let lastDifficulty: Difficulty = 'easy';
+let config: FartConfig;
+let voiceCommand2Text: Partial<Record<VoiceCommand, string>> = {};
+
+
+/**
+ * For each command, we look for the first token sequence, and
+ * for each token, we take the first text sequence.
+ */
+function populateVoiceCommandMap() {
+    voiceCommand2Text = {};
+    for (const cmd of voiceCommands) {
+        const tokenSequence = config.patterns[cmd];
+        if (!tokenSequence) {
+            console.error(`Missing command ${cmd} in configuration file !`);
+            exit(1);
+        }
+
+        const result: string [] = [];
+
+        for (const token of tokenSequence[0].split(' ')) {
+            const alternative = config.tokens[token];
+            if (!alternative) {
+                console.error(`Missing token ${token} for command ${cmd} in configuration file !`);
+                exit(1);
+            }
+            result.push(alternative[0]);
+        }
+
+        voiceCommand2Text[cmd] = result.join(' ');
+    }
+}
+
 
 async function main() {
+    const rawdata = readFileSync('speech_recognition_config_en.json');
+    config = JSON.parse(rawdata.toString());
+    populateVoiceCommandMap();
+
     const p = child.spawn('python3', ['-u', 'fart.py', 'speech_recognition_config_en.json'], { stdio: ['ignore', 'pipe', 'ignore'] });
     const stdoutLineReader = readline.createInterface({input: p.stdout});
     stdoutLineReader.on('line', (line: string) => {
@@ -31,8 +68,65 @@ async function main() {
 
 function printQuitConfirmationMessage() {
     console.log();
-    console.log('Are you sure you want to quit the program ? Answer by "yes" or "no"');
+    console.log('Are you sure you want to quit the program ?');
 }
+
+
+function getVocalCommand(cmd: PossibleCommand): string {
+    if (cmd === '<score>') return cmd;
+    return `"${voiceCommand2Text[cmd] as string}"`;
+}
+
+
+function getCommandDescription(cmd: PossibleCommand): string {
+    switch (cmd) {
+        case 'NEW_GAME': return 'Start a new game';
+
+        case 'SET_DIFFICULTY_EXPERT': return 'Each player must start and end with a double';
+        case 'SET_DIFFICULTY_MEDIUM': return 'Each player must end with a double';
+        case 'SET_DIFFICULTY_EASY': return 'No restriction';
+
+        case 'SET_PLAYER_COUNT_1': return '1 player game';
+        case 'SET_PLAYER_COUNT_2': return '2 players game';
+        case 'SET_PLAYER_COUNT_3': return '3 players game';
+        case 'SET_PLAYER_COUNT_4': return '4 players game';
+        case 'SET_PLAYER_COUNT_5': return '5 players game';
+        case 'SET_PLAYER_COUNT_6': return '6 players game';
+        case 'SET_PLAYER_COUNT_7': return '7 players game';
+        case 'SET_PLAYER_COUNT_8': return '8 players game';
+        case 'SET_PLAYER_COUNT_9': return '9 players game';
+        case 'SET_PLAYER_COUNT_10': return '10 players game';
+
+        case 'ANSWER_YES': return '';
+        case 'ANSWER_NO': return '';
+
+        case 'START_GAME': return 'Start the game';
+        case 'STOP_GAME': return 'Stop the current game';
+        case 'PAUSE_GAME': return 'Stop listening for commands until the game is resumed';
+        case 'CONTINUE_GAME': return 'Resume listening for commands';
+        case 'QUIT': return 'Quit the program';
+        case 'CORRECTION': return 'Reset the current player\'s turn';
+        case 'NEXT_TURN': return 'Move on the next player\'s turn';
+        case '<score>': return `Report a score like "${voiceCommand2Text['SCORE_1x17']}" or "${voiceCommand2Text['SCORE_2x6']}"`;
+    }
+}
+
+function printPossibleCommands() {
+    const commands = getPossibleCommands();
+    const maxLen = Math.max(...(commands.map(cmd => getVocalCommand(cmd).length)));
+    const commandLines: string [] = ['Possible things to say:', ''];
+    for (const command of commands) {
+        commandLines.push(`${getVocalCommand(command).padEnd(maxLen)}     ${getCommandDescription(command)}`);
+    }
+
+    const maxLineLen = Math.max(...(commandLines.map(line => line.length)));
+    console.log(''.padStart(maxLineLen + 4, '*'));
+    for (const line of commandLines) {
+        console.log(`* ${line.padEnd(maxLineLen)} *`);
+    }
+    console.log(''.padStart(maxLineLen + 4, '*'));
+}
+
 
 function render() {
     // Clear screen
@@ -47,7 +141,6 @@ function render() {
 
     switch(game.state) {
         case 'NOT_PLAYING': {
-            console.log('Say "guinness new game" to start or "guinness quit" to quit');
             break;
         }
         case 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING': {
@@ -56,45 +149,15 @@ function render() {
         }
         case 'WAITING_FOR_START':
         case 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START': {
-            console.log(`Difficulty (change by saying what you want):`);
-            
-            const msgs = [
-                '"expert"   => must start and end with a double',
-                '"medium"   => must end with a double',
-                '"easy"     => no restriction',
-            ];
-            for (let i = 0 ; i < 3 ; i++) {
-                console.log(`${i === game.difficulty ? ' => ' : '    '}${msgs[i]}`);
-            } 
-            console.log();
-            console.log(`Number of players (change by saying what you want):`);
-            for (let i = 1 ; i <= 10 ; i++) {
-                console.log(`${i === game.numberOfPlayers ? ' => ' : '    '}${i === 10 ? '' : ' '}"${i} player${i > 1 ? 's' : ''}"`);
-            }
-            if (game.state === 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START') {
-                printQuitConfirmationMessage();
-            } else {
-                console.log();
-                console.log('Say "guinness begin" to start the game');
-            }
+            console.log(`Difficulty:          ${game.difficulty}`);
+            console.log(`Number of players:   ${game.numberOfPlayers}`);
             break;
         }
         default: {
             printScoreBoard(game);
-
-            if (game.state === 'PLAYING') {
-                if (game.dartsPlayed.length === N_DARTS_PER_TURN) {
-                    console.log();
-                    console.log('Say "guinness next" to move on the next player\'s turn');
-                }
-
-                console.log();
-                printCommands();
-            }
-
             if (game.state === 'GAME_PAUSED') {
                 console.log();
-                console.log('Game paused. Say "guinness continue game" to resume');
+                console.log(' < Game paused >');
                 break;
             }
             if (game.state === 'GAME_WON' || game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
@@ -102,9 +165,6 @@ function render() {
                 console.log(`${game.playerStatuses[game.currentPlayer].name} won !`);
                 if (game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
                     printQuitConfirmationMessage();
-                } else {
-                    console.log();
-                    console.log('Say "guinness new game" to start a new game or "guinness quit" to quit');
                 }
                 break;
             }
@@ -114,11 +174,14 @@ function render() {
             }
             if (game.state === 'WAITING_STOP_GAME_CONFIRMATION') {
                 console.log();
-                console.log('Are you sure you want to stop the current game ? Answer by "yes" or "no"');
+                console.log('Are you sure you want to stop the current game ?');
                 break;
             }
         }
     }
+
+    console.log();
+    printPossibleCommands();
 }
 
 
@@ -136,32 +199,8 @@ function getDartDescription(dart: DartPlayed) {
 }
 
 
-function printCommands() {
-    console.log('Commands:');
-    console.log();
-    console.log('   "guinness correction"      => reset the darts for the current turn');
-    console.log('   "guinness pause game"      => stop listening for inputs until the game is resumed');
-    console.log('   "guinness continue game"   => resume listening for inputs');
-    console.log('   "guinness stop game"       => stop the current game');
-    console.log('   "guinness quit"            => quit the program');
-    console.log();
-    console.log('Reporting points:');
-    console.log('   "fifty"                    => when you hit the bullseye');
-    console.log('   "twenty five"              => when you hit the 25 point area around the bullseye');
-    console.log('   "triple twelve"            => when you hit a number in its triple area');
-    console.log('   "double twelve"            => when you hit a number in its double area');
-    console.log('   "twelve"                   => when you hit a number in normal area');
-}
-
-
 function printScoreBoard(g: PlayingState) {
-    const difficultyMsgs = [
-        'Expert mode - need to start and finish with a double',
-        'Medium mode - need to finish with a double',
-        'Easy mode - as long as you end up exactly at 0, you\'re good',
-    ];
-
-    console.log(difficultyMsgs[g.difficulty]);
+    console.log(`Difficulty: ${g.difficulty}`);
     console.log();
 
     for (let i = 0 ; i < g.playerStatuses.length ; i++) {
@@ -193,6 +232,7 @@ function processUnrecognizedInput(text: string) {
     console.log(`I didn't understand: "${text}"`);
 }
 
+
 function processCommand(cmd: string) {
     if (!isVoiceCommand(cmd)) {
         console.error(`Unknown command: '${cmd}'`);
@@ -211,9 +251,9 @@ function processCommand(cmd: string) {
         case 'ANSWER_YES': processEvent({type: 'ANSWER', answer: Answer.YES}); break;
         case 'ANSWER_NO': processEvent({type: 'ANSWER', answer: Answer.NO}); break;
 
-        case 'SET_DIFFICULTY_EASY': processEvent({type: 'SET_DIFFICULTY', difficulty: Difficulty.EASY}); break;
-        case 'SET_DIFFICULTY_MEDIUM': processEvent({type: 'SET_DIFFICULTY', difficulty: Difficulty.MEDIUM}); break;
-        case 'SET_DIFFICULTY_EXPERT': processEvent({type: 'SET_DIFFICULTY', difficulty: Difficulty.EXPERT}); break;
+        case 'SET_DIFFICULTY_EASY': processEvent({type: 'SET_DIFFICULTY', difficulty: 'easy'}); break;
+        case 'SET_DIFFICULTY_MEDIUM': processEvent({type: 'SET_DIFFICULTY', difficulty: 'medium'}); break;
+        case 'SET_DIFFICULTY_EXPERT': processEvent({type: 'SET_DIFFICULTY', difficulty: 'expert'}); break;
 
         case 'SET_PLAYER_COUNT_1':
         case 'SET_PLAYER_COUNT_2':
@@ -312,12 +352,12 @@ function initGame(g: WaitingForStartState) {
         playerStatuses.push({
             name: `Player ${i}`,
             score: 501,
-            needADoubleToStart: g.difficulty === Difficulty.EXPERT,
+            needADoubleToStart: g.difficulty === 'expert',
         });
         playerStatusesLastRound.push({
             name: `Player ${i}`,
             score: 501,
-            needADoubleToStart: g.difficulty === Difficulty.EXPERT,
+            needADoubleToStart: g.difficulty === 'expert',
         });
     }
 
@@ -352,6 +392,51 @@ function quit() {
     console.log();
     exit(0);
 }
+
+
+/**
+ * At any moment, we want to be able to show the possible commands.
+ */
+function getPossibleCommands(): PossibleCommand[] {
+    switch (game.state) {
+        case 'NOT_PLAYING':
+        case 'GAME_WON': return ['NEW_GAME', 'QUIT'];
+
+        case 'WAITING_FOR_START': return [
+            'START_GAME',
+            'SET_DIFFICULTY_EXPERT',
+            'SET_DIFFICULTY_MEDIUM',
+            'SET_DIFFICULTY_EASY',
+            'SET_PLAYER_COUNT_1',
+            'SET_PLAYER_COUNT_2',
+            'SET_PLAYER_COUNT_3',
+            'SET_PLAYER_COUNT_4',
+            'SET_PLAYER_COUNT_5',
+            'SET_PLAYER_COUNT_6',
+            'SET_PLAYER_COUNT_7',
+            'SET_PLAYER_COUNT_8',
+            'SET_PLAYER_COUNT_9',
+            'SET_PLAYER_COUNT_10',
+            'QUIT'];
+        case 'PLAYING': {
+            const cmds: PossibleCommand[] = ['QUIT', 'PAUSE_GAME', 'STOP_GAME', 'CORRECTION'];
+            if (game.dartsPlayed.length === N_DARTS_PER_TURN) {
+                cmds.push('NEXT_TURN');
+            } else {
+                cmds.push('<score>');
+            }
+            return cmds;
+        }
+        case 'GAME_PAUSED': return ['CONTINUE_GAME'];
+
+        case 'WAITING_STOP_GAME_CONFIRMATION':
+        case 'WAITING_QUIT_CONFIRMATION__GAME_WON':
+        case 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING':
+        case 'WAITING_QUIT_CONFIRMATION__PLAYING':
+        case 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START': return ['ANSWER_YES', 'ANSWER_NO'];
+    }
+}
+
 
 /**
  * Given the current state, this function processes an incoming event.
@@ -476,7 +561,7 @@ function processEvent(event: GameEvent): boolean {
                     return true;
                 }
                 if (dartScore === tentative_score - 1) {
-                    if (game.difficulty !== Difficulty.EASY) {
+                    if (game.difficulty !== 'easy') {
                         // If we need a double to finish, ending up with 1 is illegal
                         dart.status = 'SCORE_CANNOT_BE_1';
                         return true;
@@ -485,7 +570,7 @@ function processEvent(event: GameEvent): boolean {
                     return true;
                 }
                 if (dartScore === tentative_score) {
-                    if (game.difficulty !== Difficulty.EASY && !isDouble(dart)) {
+                    if (game.difficulty !== 'easy' && !isDouble(dart)) {
                         // If we need a double to finish and haven't got one, we ignore the dart
                         dart.status = 'NEED_A_DOUBLE_TO_END';
                         return true;
