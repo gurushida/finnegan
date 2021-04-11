@@ -17,7 +17,6 @@
         "dom",
       ],
       "strict": true,
-      "types": []
     },
     "include": [
       "*.ts",
