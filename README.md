@@ -2,7 +2,8 @@
 
 ## What is it ?
 This is a console application that is a voice-controlled dart scoring system for the 501 dart game.
-You talk out loud to the program and it keeps track of the score for you !
+You talk out loud to the program and it keeps track of the score for you ! And it is completely offline:
+no data transmitted anywhere for processing !
 
 Here is what it looks like when you start the program:
 ```
