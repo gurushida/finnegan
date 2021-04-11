@@ -113,13 +113,18 @@ export const N_DARTS_PER_TURN = 3;
 /**
  * This enum represents the possible states the program can be in.
  */
-export type State = 'NOT_PLAYING' | 'WAITING_FOR_START'
-             | 'PLAYING'
-             | 'GAME_WON' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION' | 'WAITING_STOP_GAME_CONFIRMATION';
-
-export type EventType = 'NEW_GAME' | 'SET_DIFFICULTY' | 'SET_PLAYER_COUNT' | 'START_GAME' | 'STOP_GAME'
-                 | 'PAUSE_GAME' | 'CONTINUE_GAME' | 'QUIT' | 'CORRECTION' | 'SCORE_REPORT'
-                 | 'ANSWER' | 'NEXT_TURN';
+export type State =
+    'NOT_PLAYING'
+    | 'WAITING_FOR_START'
+    | 'PLAYING'
+    | 'GAME_WON'
+    | 'GAME_PAUSED'
+    | 'WAITING_STOP_GAME_CONFIRMATION'
+    | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
+    | 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START'
+    | 'WAITING_QUIT_CONFIRMATION__PLAYING'
+    | 'WAITING_QUIT_CONFIRMATION__GAME_WON'
+;
 
 export interface DifficultyEvent {
     type: 'SET_DIFFICULTY';

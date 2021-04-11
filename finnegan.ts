@@ -5,7 +5,6 @@ import { GameEvent, Difficulty, State, Answer, isVoiceCommand, DartPlayed, Playe
 
 
 let currentState: State = 'NOT_PLAYING';
-let stateToReturnTo: State | undefined;
 let numberOfPlayers = 2;
 let difficulty = Difficulty.EASY;
 
@@ -32,6 +31,11 @@ async function main() {
 }
 
 
+function printQuitConfirmationMessage() {
+    console.log();
+    console.log('Are you sure you want to quit the program ? Answer by "yes" or "no"');
+}
+
 function render() {
     // Clear screen
     console.log('\u001b[2J');
@@ -48,7 +52,12 @@ function render() {
             console.log('Say "guinness new game" to start or "guinness quit" to quit');
             break;
         }
-        case 'WAITING_FOR_START': {
+        case 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING': {
+            printQuitConfirmationMessage();
+            break;
+        }
+        case 'WAITING_FOR_START':
+        case 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START': {
             console.log(`Difficulty (change by saying what you want):`);
             
             const msgs = [
@@ -64,30 +73,45 @@ function render() {
             for (let i = 1 ; i <= 10 ; i++) {
                 console.log(`${i === numberOfPlayers ? ' => ' : '    '}${i === 10 ? '' : ' '}"${i} player${i > 1 ? 's' : ''}"`);
             }
-            console.log();
-            console.log('Say "guinness begin" to start the game');
+            if (currentState === 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START') {
+                printQuitConfirmationMessage();
+            } else {
+                console.log();
+                console.log('Say "guinness begin" to start the game');
+            }
             break;
         }
         default: {
-            if (currentState !== 'WAITING_QUIT_CONFIRMATION'
-                || (stateToReturnTo !== 'WAITING_FOR_START' && stateToReturnTo !== 'NOT_PLAYING')) {
-                printScoreBoard();
+            printScoreBoard();
+
+            if (currentState === 'PLAYING') {
+                if (dartsPlayed.length === N_DARTS_PER_TURN) {
+                    console.log();
+                    console.log('Say "guinness next" to move on the next player\'s turn');
+                }
+
+                console.log();
+                printCommands();
             }
+
             if (currentState === 'GAME_PAUSED') {
                 console.log();
                 console.log('Game paused. Say "guinness continue game" to resume');
                 break;
             }
-            if (currentState === 'GAME_WON') {
+            if (currentState === 'GAME_WON' || currentState === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
                 console.log();
                 console.log(`${playerStatuses[currentPlayer].name} won !`);
-                console.log();
-                console.log('Say "guinness new game" to start a new game or "guinness quit" to quit');
+                if (currentState === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
+                    printQuitConfirmationMessage();
+                } else {
+                    console.log();
+                    console.log('Say "guinness new game" to start a new game or "guinness quit" to quit');
+                }
                 break;
             }
-            if (currentState === 'WAITING_QUIT_CONFIRMATION') {
-                console.log();
-                console.log('Are you sure you want to quit the program ? Answer by "yes" or "no"');
+            if (currentState === 'WAITING_QUIT_CONFIRMATION__PLAYING') {
+                printQuitConfirmationMessage();
                 break;
             }
             if (currentState === 'WAITING_STOP_GAME_CONFIRMATION') {
@@ -114,6 +138,24 @@ function getDartDescription(dart: DartPlayed) {
 }
 
 
+function printCommands() {
+    console.log('Commands:');
+    console.log();
+    console.log('   "guinness correction"      => reset the darts for the current turn');
+    console.log('   "guinness pause game"      => stop listening for inputs until the game is resumed');
+    console.log('   "guinness continue game"   => resume listening for inputs');
+    console.log('   "guinness stop game"       => stop the current game');
+    console.log('   "guinness quit"            => quit the program');
+    console.log();
+    console.log('Reporting points:');
+    console.log('   "fifty"                    => when you hit the bullseye');
+    console.log('   "twenty five"              => when you hit the 25 point area around the bullseye');
+    console.log('   "triple twelve"            => when you hit a number in its triple area');
+    console.log('   "double twelve"            => when you hit a number in its double area');
+    console.log('   "twelve"                   => when you hit a number in normal area');
+}
+
+
 function printScoreBoard() {
     const difficultyMsgs = [
         'Expert mode - need to start and finish with a double',
@@ -137,37 +179,14 @@ function printScoreBoard() {
         for (let i = 0 ; i < dartsPlayed.length ; i++) {
             const dart = dartsPlayed[i];
             console.log(`Dart ${i + 1}: ${isIgnored(dart) ? 'ignored' : getDartScore(dart)} (${getDartDescription(dart)})`);
-
         }
+
         if (dartsPlayed.length < N_DARTS_PER_TURN) {
             console.log(`Dart ${dartsPlayed.length + 1}:`);
-        } else {
-            console.log();
-            console.log('Say "guinness next" to move on the next player\'s turn');
         }
     }
 
     console.log();
-
-    if (currentState !== 'GAME_WON' && currentState !== 'GAME_PAUSED'
-        && currentState !== 'WAITING_QUIT_CONFIRMATION'
-        && currentState !== 'WAITING_STOP_GAME_CONFIRMATION') {
-        console.log();
-        console.log('Commands:');
-        console.log();
-        console.log('   "guinness correction"      => reset the darts for the current turn');
-        console.log('   "guinness pause game"      => stop listening for inputs until the game is resumed');
-        console.log('   "guinness continue game"   => resume listening for inputs');
-        console.log('   "guinness stop game"       => stop the current game');
-        console.log('   "guinness quit"            => quit the program');
-        console.log();
-        console.log('Reporting points:');
-        console.log('   "fifty"                    => when you hit the bullseye');
-        console.log('   "twenty five"              => when you hit the 25 point area around the bullseye');
-        console.log('   "triple twelve"            => when you hit a number in its triple area');
-        console.log('   "double twelve"            => when you hit a number in its double area');
-        console.log('   "twelve"                   => when you hit a number in normal area');
-    }
 }
 
 
@@ -320,6 +339,12 @@ function isIgnored(dart: DartPlayed) {
 }
 
 
+function quit() {
+    console.log('Bye bye...');
+    console.log();
+    exit(0);
+}
+
 /**
  * Given the current state, this function processes an incoming event.
  * If the event is not expected in the current state, it is ignored.
@@ -327,31 +352,38 @@ function isIgnored(dart: DartPlayed) {
  * Returns true if the event was processed; false if it was ignored.
  */
 function processEvent(event: GameEvent): boolean {
-    // We want to allow quitting from any state except if we are already waiting
-    // for a yes/no answer or if the game is paused
-    if (event.type === 'QUIT') {
-        if (currentState !== 'WAITING_QUIT_CONFIRMATION'
-              && currentState !== 'WAITING_STOP_GAME_CONFIRMATION'
-              && currentState !== 'GAME_PAUSED') {
-            stateToReturnTo = currentState;
-            currentState = 'WAITING_QUIT_CONFIRMATION';
-            return true;
-        }
-        return false;
-    }
-
     switch (currentState) {
-        case 'NOT_PLAYING':
+        case 'NOT_PLAYING': {
+            // If there is no game in progress, we can only start one
+            if (event.type === 'NEW_GAME') {
+                currentState = 'WAITING_FOR_START';
+                return true;
+            }
+            if (event.type === 'QUIT') {
+                currentState = 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
+                return true;
+            }
+            break;
+        }
+
         case 'GAME_WON': {
             // If there is no game in progress, we can only start one
             if (event.type === 'NEW_GAME') {
                 currentState = 'WAITING_FOR_START';
                 return true;
             }
+            if (event.type === 'QUIT') {
+                currentState = 'WAITING_QUIT_CONFIRMATION__GAME_WON';
+                return true;
+            }
             break;
         }
     
         case 'WAITING_FOR_START': {
+            if (event.type === 'QUIT') {
+                currentState = 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
+                return true;
+            }
             if (event.type === 'SET_PLAYER_COUNT') {
                 numberOfPlayers = event.numberOfPlayers;
                 return true;
@@ -369,13 +401,15 @@ function processEvent(event: GameEvent): boolean {
         }
 
         case 'PLAYING': {
+            if (event.type === 'QUIT') {
+                currentState = 'WAITING_QUIT_CONFIRMATION__PLAYING';
+                return true;
+            }
             if (event.type === 'PAUSE_GAME') {
-                stateToReturnTo = currentState;
                 currentState = 'GAME_PAUSED';
                 return true;
             }
             if (event.type === 'STOP_GAME') {
-                stateToReturnTo = currentState;
                 currentState = 'WAITING_STOP_GAME_CONFIRMATION';
                 return true;
             }
@@ -452,34 +486,66 @@ function processEvent(event: GameEvent): boolean {
 
         case 'GAME_PAUSED': {
             if (event.type === 'CONTINUE_GAME') {
-                currentState = stateToReturnTo!;
-                stateToReturnTo = undefined;
+                currentState = 'PLAYING';
                 return true;
             }
             break;
         }
 
-        case 'WAITING_QUIT_CONFIRMATION': {
+        case 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING': {
             if (event.type === 'ANSWER') {
                 if (event.answer === Answer.YES) {
-                    console.log('Bye bye...');
-                    exit(0);
+                    quit();
                 } else {
-                    currentState = stateToReturnTo!;
-                    stateToReturnTo = undefined;
+                    currentState = 'NOT_PLAYING';
                     return true;
                 }
             }
             break;
         }
+
+        case 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START': {
+            if (event.type === 'ANSWER') {
+                if (event.answer === Answer.YES) {
+                    quit();
+                } else {
+                    currentState = 'WAITING_FOR_START';
+                    return true;
+                }
+            }
+            break;
+        }
+
+        case 'WAITING_QUIT_CONFIRMATION__PLAYING': {
+            if (event.type === 'ANSWER') {
+                if (event.answer === Answer.YES) {
+                    quit();
+                } else {
+                    currentState = 'PLAYING';
+                    return true;
+                }
+            }
+            break;
+        }
+
+        case 'WAITING_QUIT_CONFIRMATION__GAME_WON': {
+            if (event.type === 'ANSWER') {
+                if (event.answer === Answer.YES) {
+                    quit();
+                } else {
+                    currentState = 'GAME_WON';
+                    return true;
+                }
+            }
+            break;
+        }
+
         case 'WAITING_STOP_GAME_CONFIRMATION': {
             if (event.type === 'ANSWER') {
                 if (event.answer === Answer.YES) {
                     currentState = 'NOT_PLAYING';
-                    stateToReturnTo = undefined;
                 } else {
-                    currentState = stateToReturnTo!;
-                    stateToReturnTo = undefined;
+                    currentState = 'PLAYING';
                 }
                 return true;
             }
