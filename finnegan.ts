@@ -1,19 +1,17 @@
 import * as child from 'child_process';
 import readline from 'readline';
 import { exit } from 'process';
-import { GameEvent, Difficulty, State, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier, DartBaseValue, N_DARTS_PER_TURN } from './types';
+import { GameEvent, Difficulty, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
+    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, WaitingForStartState } from './types';
 
 
-let currentState: State = 'NOT_PLAYING';
-let numberOfPlayers = 2;
-let difficulty = Difficulty.EASY;
-
+let game: GameState = {
+    state: 'NOT_PLAYING'
+};
 
 let playerStatusesLastRound: PlayerStatus[] = [];
-let playerStatuses: PlayerStatus[] = [];
-let currentPlayer = 0;
-let dartsPlayed: DartPlayed[] = [];
-
+let lastNumberOfPlayers = 2;
+let lastDifficulty = Difficulty.EASY;
 
 async function main() {
     const p = child.spawn('python3', ['-u', 'fart.py', 'speech_recognition_config_en.json'], { stdio: ['ignore', 'pipe', 'ignore'] });
@@ -47,7 +45,7 @@ function render() {
     console.log('\\-------------------------------------------------------/');
     console.log();
 
-    switch(currentState) {
+    switch(game.state) {
         case 'NOT_PLAYING': {
             console.log('Say "guinness new game" to start or "guinness quit" to quit');
             break;
@@ -66,14 +64,14 @@ function render() {
                 '"easy"     => no restriction',
             ];
             for (let i = 0 ; i < 3 ; i++) {
-                console.log(`${i === difficulty ? ' => ' : '    '}${msgs[i]}`);
+                console.log(`${i === game.difficulty ? ' => ' : '    '}${msgs[i]}`);
             } 
             console.log();
             console.log(`Number of players (change by saying what you want):`);
             for (let i = 1 ; i <= 10 ; i++) {
-                console.log(`${i === numberOfPlayers ? ' => ' : '    '}${i === 10 ? '' : ' '}"${i} player${i > 1 ? 's' : ''}"`);
+                console.log(`${i === game.numberOfPlayers ? ' => ' : '    '}${i === 10 ? '' : ' '}"${i} player${i > 1 ? 's' : ''}"`);
             }
-            if (currentState === 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START') {
+            if (game.state === 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START') {
                 printQuitConfirmationMessage();
             } else {
                 console.log();
@@ -82,10 +80,10 @@ function render() {
             break;
         }
         default: {
-            printScoreBoard();
+            printScoreBoard(game);
 
-            if (currentState === 'PLAYING') {
-                if (dartsPlayed.length === N_DARTS_PER_TURN) {
+            if (game.state === 'PLAYING') {
+                if (game.dartsPlayed.length === N_DARTS_PER_TURN) {
                     console.log();
                     console.log('Say "guinness next" to move on the next player\'s turn');
                 }
@@ -94,15 +92,15 @@ function render() {
                 printCommands();
             }
 
-            if (currentState === 'GAME_PAUSED') {
+            if (game.state === 'GAME_PAUSED') {
                 console.log();
                 console.log('Game paused. Say "guinness continue game" to resume');
                 break;
             }
-            if (currentState === 'GAME_WON' || currentState === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
+            if (game.state === 'GAME_WON' || game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
                 console.log();
-                console.log(`${playerStatuses[currentPlayer].name} won !`);
-                if (currentState === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
+                console.log(`${game.playerStatuses[game.currentPlayer].name} won !`);
+                if (game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
                     printQuitConfirmationMessage();
                 } else {
                     console.log();
@@ -110,11 +108,11 @@ function render() {
                 }
                 break;
             }
-            if (currentState === 'WAITING_QUIT_CONFIRMATION__PLAYING') {
+            if (game.state === 'WAITING_QUIT_CONFIRMATION__PLAYING') {
                 printQuitConfirmationMessage();
                 break;
             }
-            if (currentState === 'WAITING_STOP_GAME_CONFIRMATION') {
+            if (game.state === 'WAITING_STOP_GAME_CONFIRMATION') {
                 console.log();
                 console.log('Are you sure you want to stop the current game ? Answer by "yes" or "no"');
                 break;
@@ -156,33 +154,33 @@ function printCommands() {
 }
 
 
-function printScoreBoard() {
+function printScoreBoard(g: PlayingState) {
     const difficultyMsgs = [
         'Expert mode - need to start and finish with a double',
         'Medium mode - need to finish with a double',
         'Easy mode - as long as you end up exactly at 0, you\'re good',
     ];
 
-    console.log(difficultyMsgs[difficulty]);
+    console.log(difficultyMsgs[g.difficulty]);
     console.log();
 
-    for (let i = 0 ; i < numberOfPlayers ; i++) {
-        const cur = i === currentPlayer;
-        console.log(`${cur ? ' => ' : '    '}${playerStatuses[i].name}: ${playerStatuses[i].score}`);
+    for (let i = 0 ; i < g.playerStatuses.length ; i++) {
+        const cur = i === g.currentPlayer;
+        console.log(`${cur ? ' => ' : '    '}${g.playerStatuses[i].name}: ${g.playerStatuses[i].score}`);
     }
 
     console.log();
-    if (currentState === 'PLAYING') {
-        if (playerStatuses[currentPlayer].needADoubleToStart) {
-            console.log(`${playerStatuses[currentPlayer].name} need a double to start`);
+    if (g.state === 'PLAYING') {
+        if (g.playerStatuses[g.currentPlayer].needADoubleToStart) {
+            console.log(`${g.playerStatuses[g.currentPlayer].name} need a double to start`);
         }
-        for (let i = 0 ; i < dartsPlayed.length ; i++) {
-            const dart = dartsPlayed[i];
+        for (let i = 0 ; i < g.dartsPlayed.length ; i++) {
+            const dart = g.dartsPlayed[i];
             console.log(`Dart ${i + 1}: ${isIgnored(dart) ? 'ignored' : getDartScore(dart)} (${getDartDescription(dart)})`);
         }
 
-        if (dartsPlayed.length < N_DARTS_PER_TURN) {
-            console.log(`Dart ${dartsPlayed.length + 1}:`);
+        if (g.dartsPlayed.length < N_DARTS_PER_TURN) {
+            console.log(`Dart ${g.dartsPlayed.length + 1}:`);
         }
     }
 
@@ -306,21 +304,31 @@ function processCommand(cmd: string) {
 
 
 
-function initGame() {
-    for (let i = 1 ; i <= numberOfPlayers ; i++) {
+function initGame(g: WaitingForStartState) {
+    playerStatusesLastRound = [];
+    const playerStatuses: PlayerStatus[] = [];
+
+    for (let i = 1 ; i <= g.numberOfPlayers ; i++) {
         playerStatuses.push({
             name: `Player ${i}`,
             score: 501,
-            needADoubleToStart: difficulty === Difficulty.EXPERT,
+            needADoubleToStart: g.difficulty === Difficulty.EXPERT,
         });
         playerStatusesLastRound.push({
             name: `Player ${i}`,
             score: 501,
-            needADoubleToStart: difficulty === Difficulty.EXPERT,
+            needADoubleToStart: g.difficulty === Difficulty.EXPERT,
         });
     }
-    currentPlayer = 0;
-    dartsPlayed = [];
+
+    const playing: PlayingState = {
+        state: 'PLAYING',
+        difficulty: g.difficulty,
+        playerStatuses,
+        dartsPlayed: [],
+        currentPlayer: 0,
+    };
+    return playing;
 }
 
 
@@ -352,15 +360,19 @@ function quit() {
  * Returns true if the event was processed; false if it was ignored.
  */
 function processEvent(event: GameEvent): boolean {
-    switch (currentState) {
+    switch (game.state) {
         case 'NOT_PLAYING': {
             // If there is no game in progress, we can only start one
             if (event.type === 'NEW_GAME') {
-                currentState = 'WAITING_FOR_START';
+                game = {
+                    state: 'WAITING_FOR_START',
+                    numberOfPlayers: lastNumberOfPlayers,
+                    difficulty: lastDifficulty,
+                };
                 return true;
             }
             if (event.type === 'QUIT') {
-                currentState = 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
+                game.state = 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
                 return true;
             }
             break;
@@ -369,11 +381,15 @@ function processEvent(event: GameEvent): boolean {
         case 'GAME_WON': {
             // If there is no game in progress, we can only start one
             if (event.type === 'NEW_GAME') {
-                currentState = 'WAITING_FOR_START';
+                game = {
+                    state: 'WAITING_FOR_START',
+                    numberOfPlayers: lastNumberOfPlayers,
+                    difficulty: lastDifficulty,
+                };
                 return true;
             }
             if (event.type === 'QUIT') {
-                currentState = 'WAITING_QUIT_CONFIRMATION__GAME_WON';
+                game.state = 'WAITING_QUIT_CONFIRMATION__GAME_WON';
                 return true;
             }
             break;
@@ -381,20 +397,21 @@ function processEvent(event: GameEvent): boolean {
     
         case 'WAITING_FOR_START': {
             if (event.type === 'QUIT') {
-                currentState = 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
+                game.state = 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
                 return true;
             }
             if (event.type === 'SET_PLAYER_COUNT') {
-                numberOfPlayers = event.numberOfPlayers;
+                lastNumberOfPlayers = event.numberOfPlayers;
+                game.numberOfPlayers = event.numberOfPlayers;
                 return true;
             }
             if (event.type === 'SET_DIFFICULTY') {
-                difficulty = event.difficulty;
+                lastDifficulty = event.difficulty;
+                game.difficulty = event.difficulty;
                 return true;
             }
             if (event.type === 'START_GAME') {
-                initGame();
-                currentState = 'PLAYING';
+                game = initGame(game);
                 return true;
             }
             break;
@@ -402,33 +419,33 @@ function processEvent(event: GameEvent): boolean {
 
         case 'PLAYING': {
             if (event.type === 'QUIT') {
-                currentState = 'WAITING_QUIT_CONFIRMATION__PLAYING';
+                game.state = 'WAITING_QUIT_CONFIRMATION__PLAYING';
                 return true;
             }
             if (event.type === 'PAUSE_GAME') {
-                currentState = 'GAME_PAUSED';
+                game.state = 'GAME_PAUSED';
                 return true;
             }
             if (event.type === 'STOP_GAME') {
-                currentState = 'WAITING_STOP_GAME_CONFIRMATION';
+                game.state = 'WAITING_STOP_GAME_CONFIRMATION';
                 return true;
             }
             if (event.type === 'CORRECTION') {
-                resetTurn();
+                resetTurn(game);
                 return true;
             }
 
             // NEXT_TURN is only valid when we have played all the darts
             if (event.type === 'NEXT_TURN') {
-                if (dartsPlayed.length === N_DARTS_PER_TURN) {
-                    processEndOfTurn();
+                if (game.dartsPlayed.length === N_DARTS_PER_TURN) {
+                    processEndOfTurn(game);
                     return true;
                 }
                 return false;
             }
 
             if (event.type === 'SCORE_REPORT') {
-                if (dartsPlayed.length === N_DARTS_PER_TURN) {
+                if (game.dartsPlayed.length === N_DARTS_PER_TURN) {
                     // Let's ignore any score report if we have already played all the darts
                     return false;
                 }
@@ -438,14 +455,14 @@ function processEvent(event: GameEvent): boolean {
                     multiplier: event.multiplier,
                     status: 'OK',
                 };
-                dartsPlayed.push(dart);
+                game.dartsPlayed.push(dart);
 
-                let tentative_score = playerStatuses[currentPlayer].score;
-                if (playerStatuses[currentPlayer].needADoubleToStart) {
+                let tentative_score = game.playerStatuses[game.currentPlayer].score;
+                if (game.playerStatuses[game.currentPlayer].needADoubleToStart) {
                     if (isDouble(dart)) {
                         // If we need a double start, we are still at 501 so any double
                         // is guaranteed to be valid
-                        playerStatuses[currentPlayer].needADoubleToStart = false;
+                        game.playerStatuses[game.currentPlayer].needADoubleToStart = false;
                     } else {
                         // We need a double and did not get one
                         dart.status = 'NEED_A_DOUBLE_TO_START';
@@ -459,26 +476,26 @@ function processEvent(event: GameEvent): boolean {
                     return true;
                 }
                 if (dartScore === tentative_score - 1) {
-                    if (difficulty !== Difficulty.EASY) {
+                    if (game.difficulty !== Difficulty.EASY) {
                         // If we need a double to finish, ending up with 1 is illegal
                         dart.status = 'SCORE_CANNOT_BE_1';
                         return true;
                     }
-                    playerStatuses[currentPlayer].score = 1;
+                    game.playerStatuses[game.currentPlayer].score = 1;
                     return true;
                 }
                 if (dartScore === tentative_score) {
-                    if (difficulty !== Difficulty.EASY && !isDouble(dart)) {
+                    if (game.difficulty !== Difficulty.EASY && !isDouble(dart)) {
                         // If we need a double to finish and haven't got one, we ignore the dart
                         dart.status = 'NEED_A_DOUBLE_TO_END';
                         return true;
                     }
                     // We have reached 0, game is over
-                    playerStatuses[currentPlayer].score = 0;
-                    currentState = 'GAME_WON';
+                    game.playerStatuses[game.currentPlayer].score = 0;
+                    game.state = 'GAME_WON';
                     return true;
                 }
-                playerStatuses[currentPlayer].score -= dartScore;
+                game.playerStatuses[game.currentPlayer].score -= dartScore;
                 return true;
             }
             break;
@@ -486,7 +503,7 @@ function processEvent(event: GameEvent): boolean {
 
         case 'GAME_PAUSED': {
             if (event.type === 'CONTINUE_GAME') {
-                currentState = 'PLAYING';
+                game.state = 'PLAYING';
                 return true;
             }
             break;
@@ -497,7 +514,7 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    currentState = 'NOT_PLAYING';
+                    game = { state: 'NOT_PLAYING' };
                     return true;
                 }
             }
@@ -509,7 +526,11 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    currentState = 'WAITING_FOR_START';
+                    game = {
+                        state: 'WAITING_FOR_START',
+                        numberOfPlayers: lastNumberOfPlayers,
+                        difficulty: lastDifficulty,
+                    };
                     return true;
                 }
             }
@@ -521,7 +542,7 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    currentState = 'PLAYING';
+                    game.state = 'PLAYING';
                     return true;
                 }
             }
@@ -533,7 +554,7 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    currentState = 'GAME_WON';
+                    game.state = 'GAME_WON';
                     return true;
                 }
             }
@@ -543,9 +564,9 @@ function processEvent(event: GameEvent): boolean {
         case 'WAITING_STOP_GAME_CONFIRMATION': {
             if (event.type === 'ANSWER') {
                 if (event.answer === Answer.YES) {
-                    currentState = 'NOT_PLAYING';
+                    game = { state: 'NOT_PLAYING' };
                 } else {
-                    currentState = 'PLAYING';
+                    game.state = 'PLAYING';
                 }
                 return true;
             }
@@ -557,20 +578,20 @@ function processEvent(event: GameEvent): boolean {
 }
 
 
-function resetTurn() {
-    dartsPlayed = [];
-    playerStatuses[currentPlayer].score = playerStatusesLastRound[currentPlayer].score;
-    playerStatuses[currentPlayer].needADoubleToStart = playerStatusesLastRound[currentPlayer].needADoubleToStart;
+function resetTurn(g: PlayingState) {
+    g.dartsPlayed = [];
+    g.playerStatuses[g.currentPlayer].score = playerStatusesLastRound[g.currentPlayer].score;
+    g.playerStatuses[g.currentPlayer].needADoubleToStart = playerStatusesLastRound[g.currentPlayer].needADoubleToStart;
 }
 
 
-function processEndOfTurn() {
-    playerStatusesLastRound[currentPlayer].score = playerStatuses[currentPlayer].score;
-    playerStatusesLastRound[currentPlayer].needADoubleToStart = playerStatuses[currentPlayer].needADoubleToStart;
+function processEndOfTurn(g: PlayingState) {
+    playerStatusesLastRound[g.currentPlayer].score = g.playerStatuses[g.currentPlayer].score;
+    playerStatusesLastRound[g.currentPlayer].needADoubleToStart = g.playerStatuses[g.currentPlayer].needADoubleToStart;
 
-    dartsPlayed = [];
+    g.dartsPlayed = [];
 
-    currentPlayer = (currentPlayer + 1) % numberOfPlayers;
+    g.currentPlayer = (g.currentPlayer + 1) % g.playerStatuses.length;
 }
 
 

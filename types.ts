@@ -110,22 +110,6 @@ export type DartMultiplier = 0 | 1 | 2 | 3;
 
 export const N_DARTS_PER_TURN = 3;
 
-/**
- * This enum represents the possible states the program can be in.
- */
-export type State =
-    'NOT_PLAYING'
-    | 'WAITING_FOR_START'
-    | 'PLAYING'
-    | 'GAME_WON'
-    | 'GAME_PAUSED'
-    | 'WAITING_STOP_GAME_CONFIRMATION'
-    | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
-    | 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START'
-    | 'WAITING_QUIT_CONFIRMATION__PLAYING'
-    | 'WAITING_QUIT_CONFIRMATION__GAME_WON'
-;
-
 export interface DifficultyEvent {
     type: 'SET_DIFFICULTY';
     difficulty: Difficulty;
@@ -193,3 +177,32 @@ export interface DartPlayed {
 export function isVoiceCommand(s: string): s is VoiceCommand {
     return undefined !== voiceCommands.find((value) => value === s);
 }
+
+export interface ValuelessGameState {
+    state: 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
+}
+
+export interface WaitingForStartState {
+    state: 'WAITING_FOR_START' | 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
+    numberOfPlayers: number;
+    difficulty: Difficulty;
+}
+
+export interface PlayingState {
+    state: 'PLAYING' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION__PLAYING' | 'GAME_WON'
+           | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
+    difficulty: Difficulty;
+
+    // the number of players is the size of this array
+    playerStatuses: PlayerStatus[];
+
+    // If the size of this array is 3, the player's turn is over
+    // and the game engine is waiting for the NEXT_TURN command
+    dartsPlayed: DartPlayed[];
+
+    // If the state is 'GAME_WON' or 'WAITING_QUIT_CONFIRMATION__GAME_WON'
+    // the current player is the winner
+    currentPlayer: number;
+}
+
+export type GameState = ValuelessGameState | WaitingForStartState | PlayingState;
