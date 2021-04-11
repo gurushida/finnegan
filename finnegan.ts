@@ -66,7 +66,7 @@ let dart_3: Dart | undefined;
 
 
 async function main() {
-    const p = child.spawn('python3', ['-u', 'finnegan.py'], { stdio: ['ignore', 'pipe', 'ignore'] });
+    const p = child.spawn('python3', ['-u', 'fart.py', 'speech_recognition_config_en.json'], { stdio: ['ignore', 'pipe', 'ignore'] });
     const stdoutLineReader = readline.createInterface({input: p.stdout});
     stdoutLineReader.on('line', (line: string) => {
         if (line.startsWith('???:')) {
