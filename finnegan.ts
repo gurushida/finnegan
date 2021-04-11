@@ -10,6 +10,7 @@ let numberOfPlayers = 2;
 let difficulty = Difficulty.EASY;
 
 
+let playerStatusesLastRound: PlayerStatus[] = [];
 let playerStatuses: PlayerStatus[] = [];
 let currentPlayer = 0;
 let dart_1: DartPlayed | undefined;
@@ -127,36 +128,25 @@ function printScoreBoard() {
 
     for (let i = 0 ; i < numberOfPlayers ; i++) {
         const cur = i === currentPlayer;
-        console.log(`${cur ? ' => ' : '    '}${playerStatuses[i].name}: ${cur ? playerStatuses[i].tentative_score : playerStatuses[i].score}`);
+        console.log(`${cur ? ' => ' : '    '}${playerStatuses[i].name}: ${playerStatuses[i].score}`);
     }
 
     console.log();
     if (currentState === 'WAITING_FOR_SCORE_DART_1') {
-        if (playerStatuses[currentPlayer].need_a_double_to_start) {
+        if (playerStatuses[currentPlayer].needADoubleToStart) {
             console.log(`${playerStatuses[currentPlayer].name} need a double to start`);
         }
         console.log('Dart 1:');
     }
     if (currentState === 'WAITING_FOR_SCORE_DART_2') {
-        let need_a_double_to_start = playerStatuses[currentPlayer].need_a_double_to_start;
-        if (!isIgnored(dart_1!) && isDouble(dart_1!)) {
-            need_a_double_to_start = false;
-        }
-        if (need_a_double_to_start) {
+        if (playerStatuses[currentPlayer].needADoubleToStart) {
             console.log(`${playerStatuses[currentPlayer].name} need a double to start`);
         }
         console.log(`Dart 1: ${isIgnored(dart_1!) ? 'ignored' : getDartScore(dart_1!)} (${getDartDescription(dart_1!)})`);
         console.log('Dart 2:');
     }
     if (currentState === 'WAITING_FOR_SCORE_DART_3') {
-        let need_a_double_to_start = playerStatuses[currentPlayer].need_a_double_to_start;
-        if (!isIgnored(dart_1!) && isDouble(dart_1!)) {
-            need_a_double_to_start = false;
-        }
-        if (!isIgnored(dart_2!) && isDouble(dart_2!)) {
-            need_a_double_to_start = false;
-        }
-        if (need_a_double_to_start) {
+        if (playerStatuses[currentPlayer].needADoubleToStart) {
             console.log(`${playerStatuses[currentPlayer].name} need a double to start`);
         }
         console.log(`Dart 1: ${isIgnored(dart_1!) ? 'ignored' : getDartScore(dart_1!)} (${getDartDescription(dart_1!)})`);
@@ -164,17 +154,7 @@ function printScoreBoard() {
         console.log('Dart 3:');
     }
     if (currentState === 'WAITING_FOR_END_OF_TURN') {
-        let need_a_double_to_start = playerStatuses[currentPlayer].need_a_double_to_start;
-        if (!isIgnored(dart_1!) && isDouble(dart_1!)) {
-            need_a_double_to_start = false;
-        }
-        if (!isIgnored(dart_2!) && isDouble(dart_2!)) {
-            need_a_double_to_start = false;
-        }
-        if (!isIgnored(dart_3!) && isDouble(dart_3!)) {
-            need_a_double_to_start = false;
-        }
-        if (need_a_double_to_start) {
+        if (playerStatuses[currentPlayer].needADoubleToStart) {
             console.log(`${playerStatuses[currentPlayer].name} need a double to start`);
         }
         console.log(`Dart 1: ${isIgnored(dart_1!) ? 'ignored' : getDartScore(dart_1!)} (${getDartDescription(dart_1!)})`);
@@ -329,8 +309,12 @@ function initGame() {
         playerStatuses.push({
             name: `Player ${i}`,
             score: 501,
-            tentative_score: 501,
-            need_a_double_to_start: difficulty === Difficulty.EXPERT,
+            needADoubleToStart: difficulty === Difficulty.EXPERT,
+        });
+        playerStatusesLastRound.push({
+            name: `Player ${i}`,
+            score: 501,
+            needADoubleToStart: difficulty === Difficulty.EXPERT,
         });
     }
     currentPlayer = 0;
@@ -420,13 +404,18 @@ function processEvent(event: GameEvent): boolean {
                     multiplier: event.multiplier,
                     status: 'OK',
                 };
-                const need_a_double_to_start = playerStatuses[currentPlayer].need_a_double_to_start;
                 const tentative_score = playerStatuses[currentPlayer].score;
-                if (need_a_double_to_start && !isDouble(dart_1)) {
-                    // We need a double and did not get one
-                    dart_1.status = 'NEED_A_DOUBLE_TO_START';
-                    currentState = 'WAITING_FOR_SCORE_DART_2';
-                    return true;
+                if (playerStatuses[currentPlayer].needADoubleToStart && !isDouble(dart_1)) {
+                    if (isDouble(dart_1)) {
+                        // If we need a double start, we are still at 501 so any double
+                        // is guaranteed to be valid
+                        playerStatuses[currentPlayer].needADoubleToStart = false;
+                    } else {
+                        // We need a double and did not get one
+                        dart_1.status = 'NEED_A_DOUBLE_TO_START';
+                        currentState = 'WAITING_FOR_SCORE_DART_2';
+                        return true;
+                    }
                 }
                 const dartScore = getDartScore(dart_1);
                 if (dartScore > tentative_score) {
@@ -442,7 +431,7 @@ function processEvent(event: GameEvent): boolean {
                         currentState = 'WAITING_FOR_SCORE_DART_2';
                         return true;
                     }
-                    playerStatuses[currentPlayer].tentative_score = 1;
+                    playerStatuses[currentPlayer].score = 1;
                     currentState = 'WAITING_FOR_SCORE_DART_2';
                     return true;
                 }
@@ -454,11 +443,11 @@ function processEvent(event: GameEvent): boolean {
                         return true;
                     }
                     // We have reached 0, game is over
-                    playerStatuses[currentPlayer].tentative_score = 0;
+                    playerStatuses[currentPlayer].score = 0;
                     currentState = 'GAME_WON';
                     return true;
                 }
-                playerStatuses[currentPlayer].tentative_score -= dartScore;
+                playerStatuses[currentPlayer].score -= dartScore;
                 currentState = 'WAITING_FOR_SCORE_DART_2';
                 return true;
             }
@@ -481,7 +470,7 @@ function processEvent(event: GameEvent): boolean {
                 currentState = 'WAITING_FOR_SCORE_DART_1';
                 dart_1 = undefined;
                 dart_2 = undefined;
-                playerStatuses[currentPlayer].tentative_score = playerStatuses[currentPlayer].score;
+                playerStatuses[currentPlayer].score = playerStatuses[currentPlayer].score;
                 return true;
             }
             if (event.type === 'SCORE_REPORT') {
@@ -491,16 +480,18 @@ function processEvent(event: GameEvent): boolean {
                     status: 'OK',
                 };
 
-                let need_a_double_to_start = playerStatuses[currentPlayer].need_a_double_to_start;
-                if (!isIgnored(dart_1!) && isDouble(dart_1!)) {
-                    need_a_double_to_start = false;
-                }
-                let tentative_score = playerStatuses[currentPlayer].tentative_score;
-                if (need_a_double_to_start && !isDouble(dart_2)) {
-                    // We need a double and did not get one
-                    dart_2.status = 'NEED_A_DOUBLE_TO_START';
-                    currentState = 'WAITING_FOR_SCORE_DART_3';
-                    return true;
+                let tentative_score = playerStatuses[currentPlayer].score;
+                if (playerStatuses[currentPlayer].needADoubleToStart) {
+                    if (isDouble(dart_2)) {
+                        // If we need a double start, we are still at 501 so any double
+                        // is guaranteed to be valid
+                        playerStatuses[currentPlayer].needADoubleToStart = false;
+                    } else {
+                        // We need a double and did not get one
+                        dart_2.status = 'NEED_A_DOUBLE_TO_START';
+                        currentState = 'WAITING_FOR_SCORE_DART_3';
+                        return true;
+                    }
                 }
                 const dartScore = getDartScore(dart_2);
                 if (dartScore > tentative_score) {
@@ -516,7 +507,7 @@ function processEvent(event: GameEvent): boolean {
                         currentState = 'WAITING_FOR_SCORE_DART_3';
                         return true;
                     }
-                    playerStatuses[currentPlayer].tentative_score = 1;
+                    playerStatuses[currentPlayer].score = 1;
                     currentState = 'WAITING_FOR_SCORE_DART_3';
                     return true;
                 }
@@ -528,11 +519,11 @@ function processEvent(event: GameEvent): boolean {
                         return true;
                     }
                     // We have reached 0, game is over
-                    playerStatuses[currentPlayer].tentative_score = 0;
+                    playerStatuses[currentPlayer].score = 0;
                     currentState = 'GAME_WON';
                     return true;
                 }
-                playerStatuses[currentPlayer].tentative_score -= dartScore;
+                playerStatuses[currentPlayer].score -= dartScore;
                 currentState = 'WAITING_FOR_SCORE_DART_3';
                 return true;
             }
@@ -556,7 +547,8 @@ function processEvent(event: GameEvent): boolean {
                 dart_1 = undefined;
                 dart_2 = undefined;
                 dart_3 = undefined;
-                playerStatuses[currentPlayer].tentative_score = playerStatuses[currentPlayer].score;
+                playerStatuses[currentPlayer].score = playerStatusesLastRound[currentPlayer].score;
+                playerStatuses[currentPlayer].needADoubleToStart = playerStatusesLastRound[currentPlayer].needADoubleToStart;
                 return true;
             }
             if (event.type === 'SCORE_REPORT') {
@@ -566,20 +558,19 @@ function processEvent(event: GameEvent): boolean {
                     status: 'OK',
                 };
 
-                let need_a_double_to_start = playerStatuses[currentPlayer].need_a_double_to_start;
-                if (!isIgnored(dart_1!) && isDouble(dart_1!)) {
-                    need_a_double_to_start = false;
-                }
-                if (!isIgnored(dart_2!) && isDouble(dart_2!)) {
-                    need_a_double_to_start = false;
-                }
-                let tentative_score = playerStatuses[currentPlayer].tentative_score;
+                let tentative_score = playerStatuses[currentPlayer].score;
 
-                if (need_a_double_to_start && !isDouble(dart_3)) {
-                    // We need a double and did not get one
-                    dart_3.status = 'NEED_A_DOUBLE_TO_START';
-                    currentState = 'WAITING_FOR_END_OF_TURN';
-                    return true;
+                if (playerStatuses[currentPlayer].needADoubleToStart) {
+                    if (isDouble(dart_3)) {
+                        // If we need a double start, we are still at 501 so any double
+                        // is guaranteed to be valid
+                        playerStatuses[currentPlayer].needADoubleToStart = false;
+                    } else {
+                        // We need a double and did not get one
+                        dart_3.status = 'NEED_A_DOUBLE_TO_START';
+                        currentState = 'WAITING_FOR_END_OF_TURN';
+                        return true;
+                    }
                 }
                 const dartScore = getDartScore(dart_3);
                 if (dartScore > tentative_score) {
@@ -595,7 +586,7 @@ function processEvent(event: GameEvent): boolean {
                         currentState = 'WAITING_FOR_END_OF_TURN';
                         return true;
                     }
-                    playerStatuses[currentPlayer].tentative_score = 1;
+                    playerStatuses[currentPlayer].score = 1;
                     currentState = 'WAITING_FOR_SCORE_DART_3';
                     return true;
                 }
@@ -607,11 +598,11 @@ function processEvent(event: GameEvent): boolean {
                         return true;
                     }
                     // We have reached 0, game is over
-                    playerStatuses[currentPlayer].tentative_score = 0;
+                    playerStatuses[currentPlayer].score = 0;
                     currentState = 'GAME_WON';
                     return true;
                 }
-                playerStatuses[currentPlayer].tentative_score -= dartScore;
+                playerStatuses[currentPlayer].score -= dartScore;
                 currentState = 'WAITING_FOR_END_OF_TURN';
                 return true;
             }
@@ -635,7 +626,8 @@ function processEvent(event: GameEvent): boolean {
                 dart_1 = undefined;
                 dart_2 = undefined;
                 dart_3 = undefined;
-                playerStatuses[currentPlayer].tentative_score = playerStatuses[currentPlayer].score;
+                playerStatuses[currentPlayer].score = playerStatusesLastRound[currentPlayer].score;
+                playerStatuses[currentPlayer].needADoubleToStart = playerStatusesLastRound[currentPlayer].needADoubleToStart;
                 return true;
             }
             if (event.type === 'NEXT_TURN') {
@@ -687,12 +679,8 @@ function processEvent(event: GameEvent): boolean {
 
 
 function processEndOfTurn() {
-    for (const dart of [dart_1!, dart_2!, dart_3!]) {
-        if (isDouble(dart)) {
-            playerStatuses[currentPlayer].need_a_double_to_start = false;
-        }
-    }
-    playerStatuses[currentPlayer].score = playerStatuses[currentPlayer].tentative_score;
+    playerStatusesLastRound[currentPlayer].score = playerStatuses[currentPlayer].score;
+    playerStatusesLastRound[currentPlayer].needADoubleToStart = playerStatuses[currentPlayer].needADoubleToStart;
 
     dart_1 = undefined;
     dart_2 = undefined;

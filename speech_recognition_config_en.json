@@ -1,7 +1,7 @@
 {
     "vosk_model_path": "model",
     "tokens": {
-        "GUINNESS": ["guinness", "get us", "give us"],
+        "GUINNESS": ["guinness", "get us", "give us", "eunice", "dennis"],
         "NEW": ["new", "near", "you", "your"],
         "GAME": ["game"],
         "PAUSE": ["pause", "pose", "post", "posts", "polls", "both", "foes"],

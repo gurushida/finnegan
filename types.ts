@@ -155,11 +155,7 @@ export type GameEvent = DifficultyEvent | PlayerCountEvent | AnswerEvent | Score
 export interface PlayerStatus {
     name: string;
     score: number;
-    // Darts only cound when the round is finished, in case a dart falls
-    // off the board. For the current player, the tentative score is the
-    // score adjusted with the darts already played in the round
-    tentative_score: number;
-    need_a_double_to_start: boolean;
+    needADoubleToStart: boolean;
 }
 
 /**
