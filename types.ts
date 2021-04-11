@@ -108,12 +108,13 @@ export type DartBaseValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
 
 export type DartMultiplier = 0 | 1 | 2 | 3;
 
+export const N_DARTS_PER_TURN = 3;
+
 /**
  * This enum represents the possible states the program can be in.
  */
 export type State = 'NOT_PLAYING' | 'WAITING_FOR_START'
-             | 'WAITING_FOR_SCORE_DART_1' | 'WAITING_FOR_SCORE_DART_2' | 'WAITING_FOR_SCORE_DART_3'
-             | 'WAITING_FOR_END_OF_TURN'
+             | 'WAITING_FOR_DART_SCORE' | 'WAITING_FOR_END_OF_TURN'
              | 'GAME_WON' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION' | 'WAITING_STOP_GAME_CONFIRMATION';
 
 export type EventType = 'NEW_GAME' | 'SET_DIFFICULTY' | 'SET_PLAYER_COUNT' | 'START_GAME' | 'STOP_GAME'
