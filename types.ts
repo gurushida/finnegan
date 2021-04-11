@@ -114,7 +114,7 @@ export const N_DARTS_PER_TURN = 3;
  * This enum represents the possible states the program can be in.
  */
 export type State = 'NOT_PLAYING' | 'WAITING_FOR_START'
-             | 'WAITING_FOR_DART_SCORE' | 'WAITING_FOR_END_OF_TURN'
+             | 'PLAYING'
              | 'GAME_WON' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION' | 'WAITING_STOP_GAME_CONFIRMATION';
 
 export type EventType = 'NEW_GAME' | 'SET_DIFFICULTY' | 'SET_PLAYER_COUNT' | 'START_GAME' | 'STOP_GAME'
