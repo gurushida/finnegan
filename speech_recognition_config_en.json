@@ -1,5 +1,5 @@
 {
-    "vosk_model_path": "model",
+    "vosk_model_path": "vosk-model-small-en-us-0.15",
     "tokens": {
         "GUINNESS": ["guinness", "get us", "give us", "eunice", "dennis"],
         "NEW": ["new", "near", "you", "your"],
