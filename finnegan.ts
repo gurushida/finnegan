@@ -49,12 +49,25 @@ function populateVoiceCommandMap() {
 }
 
 
-async function main() {
+async function startGameEngine(args: ParsedArguments) {
     const rawdata = readFileSync('speech_recognition_config_en.json');
     config = JSON.parse(rawdata.toString());
     populateVoiceCommandMap();
 
-    const p = child.spawn('python3', ['-u', 'fart.py', 'speech_recognition_config_en.json'], { stdio: ['ignore', 'pipe', 'ignore'] });
+    const fartArgs = ['-u', 'fart.py', 'speech_recognition_config_en.json'];
+
+    if (args.device) {
+        fartArgs.push('-d', args.device);
+    }
+
+    if (args.samplerate) {
+        fartArgs.push('-r', args.samplerate);
+    }
+
+    lastDifficulty = parsed.difficulty;
+    lastNumberOfPlayers = parsed.players
+
+    const p = child.spawn('python3', fartArgs, { stdio: ['ignore', 'pipe', 'ignore'] });
     const stdoutLineReader = readline.createInterface({input: p.stdout});
     stdoutLineReader.on('line', (line: string) => {
         if (line.startsWith('???:')) {
@@ -756,5 +769,142 @@ function startServer(port: number) {
     server.listen(port);
 }
 
-main();
-startServer(30501);
+function printUsage() {
+    console.log('Usage: finnegan [OPTIONS] COMMAND');
+    console.log();
+    console.log('COMMANDS:');
+    console.log('  list_devices   Runs "python3 fart.py -l" to show the available audio devices');
+    console.log('  play           Starts the game engine that begins to listen for voice commands');
+    console.log();
+    console.log('OPTIONS:');
+    console.log('  --difficulty  expert | medium | easy');
+    console.log('           Sets the initial game difficulty (default = easy)');
+    console.log();
+    console.log('  --players N');
+    console.log('           Sets the initial number of players (default = 2)');
+    console.log();
+    console.log('  --port PORT');
+    console.log('           If specified, starts a web server that listens to the given port and');
+    console.log('           replies to http request with the current game state in json format');
+    console.log();
+    console.log('  --device D');
+    console.log('           Specifies the audio device parameter to be passed to fart.py');
+    console.log();
+    console.log('  --samplerate RATE');
+    console.log('           Specifies the samplerate parameter to be passed to fart.py');
+    console.log();
+}
+
+interface ParsedArguments {
+    difficulty: Difficulty;
+    players: number;
+    port?: number;
+    device?: string;
+    samplerate?: string;
+    command?: 'play' | 'list_devices';
+}
+
+function parseArguments(): ParsedArguments {
+    const parsed: ParsedArguments = {
+        difficulty: 'easy',
+        players: 2,
+    };
+    let args = process.argv.slice(2);
+    if (args.length === 0) {
+        printUsage();
+        exit(0);
+    }
+
+    let i = 0;
+    while (i < args.length) {
+        const arg = args[i++];
+
+        if (arg === 'play' || arg === 'list_devices') {
+            parsed.command = arg;
+            continue;
+        }
+
+        if (arg === '--difficulty') {
+            if (i === args.length) {
+                console.error(`Missing ${arg} argument`);
+                exit(1);
+            }
+            const argValue = args[i++];
+                if (argValue !== 'expert' && argValue !== 'medium' && argValue !== 'easy') {
+                console.error(`Invalid ${arg} argument: ${argValue}`);
+                exit(1);
+            }
+            parsed.difficulty = argValue;
+            continue;
+        }
+
+        if (arg === '--players') {
+            if (i === args.length) {
+                console.error(`Missing ${arg} argument`);
+                exit(1);
+            }
+            const argValue = args[i++];
+                parsed.players = parseInt(argValue);
+            if (isNaN(parsed.players) || parsed.players < 1 || parsed.players > 10) {
+                console.error(`Invalid ${arg} argument: ${argValue}`);
+                exit(1);
+            }
+            continue;
+        }
+
+        if (arg === '--port') {
+            if (i === args.length) {
+                console.error(`Missing ${arg} argument`);
+                exit(1);
+            }
+            const argValue = args[i++];
+                parsed.port = parseInt(argValue);
+            if (isNaN(parsed.port) || parsed.port < 1024 || parsed.port > 65635) {
+                console.error(`Invalid ${arg} argument: ${argValue}`);
+                exit(1);
+            }
+            continue;
+        }
+
+        if (arg === '--device') {
+            if (i === args.length) {
+                console.error(`Missing ${arg} argument`);
+                exit(1);
+            }
+            parsed.device = args[i++];
+            continue;
+        }
+
+        if (arg === '--samplerate') {
+            if (i === args.length) {
+                console.error(`Missing ${arg} argument`);
+                exit(1);
+            }
+            parsed.device = args[i++];
+            continue;
+        }
+
+        console.error(`Unknown argument: ${arg}`);
+    }
+
+    if (!parsed.command) {
+        console.error('Missing command');
+        exit(1);
+    }
+
+    return parsed;
+}
+
+
+const parsed = parseArguments();
+
+if (parsed.command === 'list_devices') {
+    child.spawnSync('python3', ['-u', 'fart.py', '-l'], { stdio: ['ignore', 'inherit', 'inherit'] });
+    exit(0);
+}
+
+if (parsed.port !== undefined) {
+    startServer(parsed.port);
+}
+
+startGameEngine(parsed);

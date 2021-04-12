@@ -130,5 +130,5 @@ dmypy.json
 
 model/
 .DS_Store
-finnegan.js
+finnegan
 node_modules/
