@@ -3,12 +3,15 @@ import readline from 'readline';
 import { exit } from 'process';
 import { readFileSync } from 'fs';
 import { GameEvent, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
-    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, WaitingForStartState, PossibleCommand, VoiceCommand, FartConfig, voiceCommands, Difficulty } from './types';
+    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand, FartConfig, voiceCommands, Difficulty, State, ValuelessGameState } from './types';
 
-
-let game: GameState = {
-    state: 'NOT_PLAYING'
+const BLANK_STATE: ValuelessGameState = {
+    state: 'NOT_PLAYING',
+    possibleThingsToSay: [],
 };
+
+
+let game: GameState = BLANK_STATE;
 
 let playerStatusesLastRound: PlayerStatus[] = [];
 let lastNumberOfPlayers = 2;
@@ -59,9 +62,11 @@ async function main() {
             processUnrecognizedInput(line.substring(4));
         } else if (line.startsWith('CMD:')) {
             processCommand(line.substring(4));
+            updatePossibleThingsToSay();
             render();
         }
     });
+    updatePossibleThingsToSay();
     render();
 }
 
@@ -97,8 +102,8 @@ function getCommandDescription(cmd: PossibleCommand): string {
         case 'SET_PLAYER_COUNT_9': return '9 players game';
         case 'SET_PLAYER_COUNT_10': return '10 players game';
 
-        case 'ANSWER_YES': return '';
-        case 'ANSWER_NO': return '';
+        case 'ANSWER_YES': return game.state === 'WAITING_STOP_GAME_CONFIRMATION' ? 'Stop the game' : 'Quit the program';
+        case 'ANSWER_NO': return 'Stay';
 
         case 'START_GAME': return 'Start the game';
         case 'STOP_GAME': return 'Stop the current game';
@@ -112,11 +117,10 @@ function getCommandDescription(cmd: PossibleCommand): string {
 }
 
 function printPossibleCommands() {
-    const commands = getPossibleCommands();
-    const maxLen = Math.max(...(commands.map(cmd => getVocalCommand(cmd).length)));
+    const maxLen = Math.max(...(game.possibleThingsToSay.map(p => p.textToSay.length)));
     const commandLines: string [] = ['Possible things to say:', ''];
-    for (const command of commands) {
-        commandLines.push(`${getVocalCommand(command).padEnd(maxLen)}     ${getCommandDescription(command)}`);
+    for (const command of game.possibleThingsToSay) {
+        commandLines.push(`${command.textToSay.padEnd(maxLen)}     ${command.description}`);
     }
 
     const maxLineLen = Math.max(...(commandLines.map(line => line.length)));
@@ -125,6 +129,20 @@ function printPossibleCommands() {
         console.log(`* ${line.padEnd(maxLineLen)} *`);
     }
     console.log(''.padStart(maxLineLen + 4, '*'));
+}
+
+
+function updatePossibleThingsToSay() {
+    const possibleCommands = getPossibleCommands(game.state);
+    console.log(possibleCommands);
+    game.possibleThingsToSay = [];
+    for (const command of possibleCommands) {
+        game.possibleThingsToSay.push({
+            command,
+            textToSay: getVocalCommand(command),
+            description: getCommandDescription(command)
+        });
+    }
 }
 
 
@@ -343,32 +361,31 @@ function processCommand(cmd: string) {
 }
 
 
-
-function initGame(g: WaitingForStartState) {
+function startGame() {
     playerStatusesLastRound = [];
     const playerStatuses: PlayerStatus[] = [];
 
-    for (let i = 1 ; i <= g.numberOfPlayers ; i++) {
+    for (let i = 1 ; i <= lastNumberOfPlayers ; i++) {
         playerStatuses.push({
             name: `Player ${i}`,
             score: 501,
-            needADoubleToStart: g.difficulty === 'expert',
+            needADoubleToStart: lastDifficulty === 'expert',
         });
         playerStatusesLastRound.push({
             name: `Player ${i}`,
             score: 501,
-            needADoubleToStart: g.difficulty === 'expert',
+            needADoubleToStart: lastDifficulty === 'expert',
         });
     }
 
-    const playing: PlayingState = {
+    game = {
         state: 'PLAYING',
-        difficulty: g.difficulty,
+        possibleThingsToSay: [],
+        difficulty: lastDifficulty,
         playerStatuses,
         dartsPlayed: [],
         currentPlayer: 0,
     };
-    return playing;
 }
 
 
@@ -394,11 +411,8 @@ function quit() {
 }
 
 
-/**
- * At any moment, we want to be able to show the possible commands.
- */
-function getPossibleCommands(): PossibleCommand[] {
-    switch (game.state) {
+function getPossibleCommands(state: State): PossibleCommand[] {
+    switch (state) {
         case 'NOT_PLAYING':
         case 'GAME_WON': return ['NEW_GAME', 'QUIT'];
 
@@ -420,7 +434,7 @@ function getPossibleCommands(): PossibleCommand[] {
             'QUIT'];
         case 'PLAYING': {
             const cmds: PossibleCommand[] = ['QUIT', 'PAUSE_GAME', 'STOP_GAME', 'CORRECTION'];
-            if (game.dartsPlayed.length === N_DARTS_PER_TURN) {
+            if (isTurnComplete()) {
                 cmds.push('NEXT_TURN');
             } else {
                 cmds.push('<score>');
@@ -438,6 +452,56 @@ function getPossibleCommands(): PossibleCommand[] {
 }
 
 
+function waitForStart() {
+    game = {
+        state: 'WAITING_FOR_START',
+        possibleThingsToSay: [],
+        numberOfPlayers: lastNumberOfPlayers,
+        difficulty: lastDifficulty,
+    };
+}
+
+
+function waitForQuitAnswerWhileNotPlaying() {
+    game.state = 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
+}
+
+
+function waitForQuitAnswerWhenGameIsWon() {
+    game.state = 'WAITING_QUIT_CONFIRMATION__GAME_WON';
+}
+
+
+function waitForQuitAnswerWhileWaitingForStart() {
+    game.state = 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
+}
+
+
+function waitForQuitAnswerWhilePlaying() {
+    game.state = 'WAITING_QUIT_CONFIRMATION__PLAYING';
+}
+
+
+function pauseGame() {
+    game.state = 'GAME_PAUSED';
+}
+
+
+function waitForStopGameAnswer() {
+    game.state = 'WAITING_STOP_GAME_CONFIRMATION';
+}
+
+
+function continuePlaying() {
+    game.state = 'PLAYING';
+}
+
+
+function gameOver() {
+    game.state = 'GAME_WON';
+}
+
+
 /**
  * Given the current state, this function processes an incoming event.
  * If the event is not expected in the current state, it is ignored.
@@ -449,15 +513,11 @@ function processEvent(event: GameEvent): boolean {
         case 'NOT_PLAYING': {
             // If there is no game in progress, we can only start one
             if (event.type === 'NEW_GAME') {
-                game = {
-                    state: 'WAITING_FOR_START',
-                    numberOfPlayers: lastNumberOfPlayers,
-                    difficulty: lastDifficulty,
-                };
+                waitForStart();
                 return true;
             }
             if (event.type === 'QUIT') {
-                game.state = 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
+                waitForQuitAnswerWhileNotPlaying();
                 return true;
             }
             break;
@@ -466,15 +526,11 @@ function processEvent(event: GameEvent): boolean {
         case 'GAME_WON': {
             // If there is no game in progress, we can only start one
             if (event.type === 'NEW_GAME') {
-                game = {
-                    state: 'WAITING_FOR_START',
-                    numberOfPlayers: lastNumberOfPlayers,
-                    difficulty: lastDifficulty,
-                };
+                waitForStart();
                 return true;
             }
             if (event.type === 'QUIT') {
-                game.state = 'WAITING_QUIT_CONFIRMATION__GAME_WON';
+                waitForQuitAnswerWhenGameIsWon();
                 return true;
             }
             break;
@@ -482,7 +538,7 @@ function processEvent(event: GameEvent): boolean {
     
         case 'WAITING_FOR_START': {
             if (event.type === 'QUIT') {
-                game.state = 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
+                waitForQuitAnswerWhileWaitingForStart();
                 return true;
             }
             if (event.type === 'SET_PLAYER_COUNT') {
@@ -496,7 +552,7 @@ function processEvent(event: GameEvent): boolean {
                 return true;
             }
             if (event.type === 'START_GAME') {
-                game = initGame(game);
+                startGame();
                 return true;
             }
             break;
@@ -504,33 +560,33 @@ function processEvent(event: GameEvent): boolean {
 
         case 'PLAYING': {
             if (event.type === 'QUIT') {
-                game.state = 'WAITING_QUIT_CONFIRMATION__PLAYING';
+                waitForQuitAnswerWhilePlaying();
                 return true;
             }
             if (event.type === 'PAUSE_GAME') {
-                game.state = 'GAME_PAUSED';
+                pauseGame();
                 return true;
             }
             if (event.type === 'STOP_GAME') {
-                game.state = 'WAITING_STOP_GAME_CONFIRMATION';
+                waitForStopGameAnswer();
                 return true;
             }
             if (event.type === 'CORRECTION') {
-                resetTurn(game);
+                resetTurn();
                 return true;
             }
 
             // NEXT_TURN is only valid when we have played all the darts
             if (event.type === 'NEXT_TURN') {
-                if (game.dartsPlayed.length === N_DARTS_PER_TURN) {
-                    processEndOfTurn(game);
+                if (isTurnComplete()) {
+                    processEndOfTurn();
                     return true;
                 }
                 return false;
             }
 
             if (event.type === 'SCORE_REPORT') {
-                if (game.dartsPlayed.length === N_DARTS_PER_TURN) {
+                if (isTurnComplete()) {
                     // Let's ignore any score report if we have already played all the darts
                     return false;
                 }
@@ -577,7 +633,7 @@ function processEvent(event: GameEvent): boolean {
                     }
                     // We have reached 0, game is over
                     game.playerStatuses[game.currentPlayer].score = 0;
-                    game.state = 'GAME_WON';
+                    gameOver();
                     return true;
                 }
                 game.playerStatuses[game.currentPlayer].score -= dartScore;
@@ -588,7 +644,7 @@ function processEvent(event: GameEvent): boolean {
 
         case 'GAME_PAUSED': {
             if (event.type === 'CONTINUE_GAME') {
-                game.state = 'PLAYING';
+                continuePlaying();
                 return true;
             }
             break;
@@ -599,7 +655,7 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    game = { state: 'NOT_PLAYING' };
+                    game = BLANK_STATE;
                     return true;
                 }
             }
@@ -611,11 +667,7 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    game = {
-                        state: 'WAITING_FOR_START',
-                        numberOfPlayers: lastNumberOfPlayers,
-                        difficulty: lastDifficulty,
-                    };
+                    waitForStart();
                     return true;
                 }
             }
@@ -627,7 +679,7 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    game.state = 'PLAYING';
+                    continuePlaying();
                     return true;
                 }
             }
@@ -639,7 +691,7 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    game.state = 'GAME_WON';
+                    gameOver();
                     return true;
                 }
             }
@@ -649,9 +701,9 @@ function processEvent(event: GameEvent): boolean {
         case 'WAITING_STOP_GAME_CONFIRMATION': {
             if (event.type === 'ANSWER') {
                 if (event.answer === Answer.YES) {
-                    game = { state: 'NOT_PLAYING' };
+                    game = BLANK_STATE
                 } else {
-                    game.state = 'PLAYING';
+                    continuePlaying();
                 }
                 return true;
             }
@@ -663,20 +715,33 @@ function processEvent(event: GameEvent): boolean {
 }
 
 
-function resetTurn(g: PlayingState) {
-    g.dartsPlayed = [];
-    g.playerStatuses[g.currentPlayer].score = playerStatusesLastRound[g.currentPlayer].score;
-    g.playerStatuses[g.currentPlayer].needADoubleToStart = playerStatusesLastRound[g.currentPlayer].needADoubleToStart;
+
+function isTurnComplete() {
+    if (game.state !== 'PLAYING') {
+        throw 'Illegal state';
+    }
+    return game.dartsPlayed.length === N_DARTS_PER_TURN;
 }
 
 
-function processEndOfTurn(g: PlayingState) {
-    playerStatusesLastRound[g.currentPlayer].score = g.playerStatuses[g.currentPlayer].score;
-    playerStatusesLastRound[g.currentPlayer].needADoubleToStart = g.playerStatuses[g.currentPlayer].needADoubleToStart;
+function resetTurn() {
+    if (game.state !== 'PLAYING') {
+        throw 'Illegal state';
+    }
+    game.dartsPlayed = [];
+    game.playerStatuses[game.currentPlayer].score = playerStatusesLastRound[game.currentPlayer].score;
+    game.playerStatuses[game.currentPlayer].needADoubleToStart = playerStatusesLastRound[game.currentPlayer].needADoubleToStart;
+}
 
-    g.dartsPlayed = [];
 
-    g.currentPlayer = (g.currentPlayer + 1) % g.playerStatuses.length;
+function processEndOfTurn() {
+    if (game.state !== 'PLAYING') {
+        throw 'Illegal state';
+    }
+    playerStatusesLastRound[game.currentPlayer].score = game.playerStatuses[game.currentPlayer].score;
+    playerStatusesLastRound[game.currentPlayer].needADoubleToStart = game.playerStatuses[game.currentPlayer].needADoubleToStart;
+    game.dartsPlayed = [];
+    game.currentPlayer = (game.currentPlayer + 1) % game.playerStatuses.length;
 }
 
 

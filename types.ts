@@ -205,17 +205,44 @@ export function isVoiceCommand(s: string): s is VoiceCommand {
     return undefined !== voiceCommands.find((value) => value === s);
 }
 
-export interface ValuelessGameState {
+/**
+ * This describes a possible command. 
+ */
+export interface PossibleThingToSay {
+    // The command symbol
+    command: PossibleCommand;
+
+    // The text to actually say to trigger it like "start game"
+    // or <score> if the command can be triggered by any score
+    // report like "double seven" or "triple ten"
+    textToSay: string;
+
+    // A description of what the command will do if triggered
+    description: string;
+}
+
+export type State = 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
+ | 'WAITING_FOR_START' | 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START'
+ | 'PLAYING' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION__PLAYING' | 'GAME_WON'
+ | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
+
+export interface BaseGameState {
+    state: State;
+    // The possible commands
+    possibleThingsToSay: PossibleThingToSay[];
+}
+
+export interface ValuelessGameState extends BaseGameState {
     state: 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
 }
 
-export interface WaitingForStartState {
+export interface WaitingForStartState extends BaseGameState {
     state: 'WAITING_FOR_START' | 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
     numberOfPlayers: number;
     difficulty: Difficulty;
 }
 
-export interface PlayingState {
+export interface PlayingState extends BaseGameState {
     state: 'PLAYING' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION__PLAYING' | 'GAME_WON'
            | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
     difficulty: Difficulty;

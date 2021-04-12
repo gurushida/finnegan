@@ -14,7 +14,7 @@
         "YES": ["yes"],
         "NO": ["no"],
         "EXPERT": ["expert", "expect", "expects", "experts", "expense"],
-        "MEDIUM": ["medium", "median"],
+        "MEDIUM": ["medium", "median", "idiom"],
         "EASY": ["easy", "he's he", "he's"],
         "PLAYER": ["player", "payer"],
         "PLAYERS": ["players"],
