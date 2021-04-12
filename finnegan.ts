@@ -745,4 +745,16 @@ function processEndOfTurn() {
 }
 
 
+import http from 'http';
+
+function startServer(port: number) {
+    const server = http.createServer((req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.writeHead(200);
+        res.end(JSON.stringify(game, null, 2));
+    });
+    server.listen(port);
+}
+
 main();
+startServer(30501);
