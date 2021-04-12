@@ -1,3 +1,5 @@
+export type Language = 'en' | 'fr';
+
 /**
  * The VoiceCommand type describes all the supported commands that can be sent
  * by fart.py
@@ -227,6 +229,7 @@ export type State = 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
  | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
 
 export interface BaseGameState {
+    language: Language;
     state: State;
     // The possible commands
     possibleThingsToSay: PossibleThingToSay[];

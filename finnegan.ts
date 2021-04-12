@@ -3,15 +3,20 @@ import readline from 'readline';
 import { exit } from 'process';
 import { readFileSync } from 'fs';
 import { GameEvent, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
-    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand, FartConfig, voiceCommands, Difficulty, State, ValuelessGameState } from './types';
+    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand, FartConfig, voiceCommands, Difficulty, State, ValuelessGameState, Language } from './types';
 
-const BLANK_STATE: ValuelessGameState = {
-    state: 'NOT_PLAYING',
-    possibleThingsToSay: [],
-};
+let language: Language = 'en';
+
+function getBlankState(): ValuelessGameState {
+    return {
+        language,
+        state: 'NOT_PLAYING',
+        possibleThingsToSay: [],
+    };
+}
 
 
-let game: GameState = BLANK_STATE;
+let game: GameState = getBlankState();
 
 let playerStatusesLastRound: PlayerStatus[] = [];
 let lastNumberOfPlayers = 2;
@@ -50,11 +55,13 @@ function populateVoiceCommandMap() {
 
 
 async function startGameEngine(args: ParsedArguments) {
-    const rawdata = readFileSync('speech_recognition_config_en.json');
+    language = args.language;
+    const configFile = language === 'en' ? 'speech_recognition_config_en.json' : 'speech_recognition_config_fr.json';
+    const rawdata = readFileSync(configFile);
     config = JSON.parse(rawdata.toString());
     populateVoiceCommandMap();
 
-    const fartArgs = ['-u', 'fart.py', 'speech_recognition_config_en.json'];
+    const fartArgs = ['-u', 'fart.py', configFile];
 
     if (args.device) {
         fartArgs.push('-d', args.device);
@@ -86,7 +93,11 @@ async function startGameEngine(args: ParsedArguments) {
 
 function printQuitConfirmationMessage() {
     console.log();
-    console.log('Are you sure you want to quit the program ?');
+    if (language === 'en') {
+        console.log('Are you sure you want to quit the program ?');
+    } else {
+        console.log('Etes-vous sûr de vouloir quitter le programme ?');
+    }
 }
 
 
@@ -97,6 +108,16 @@ function getVocalCommand(cmd: PossibleCommand): string {
 
 
 function getCommandDescription(cmd: PossibleCommand): string {
+    console.log(`language = ${language}`);
+    if (language === 'en') {
+        return getCommandDescriptionEn(cmd);
+    } else {
+        return getCommandDescriptionFr(cmd);
+    }
+}
+
+
+function getCommandDescriptionEn(cmd: PossibleCommand): string {
     switch (cmd) {
         case 'NEW_GAME': return 'Start a new game';
 
@@ -129,9 +150,44 @@ function getCommandDescription(cmd: PossibleCommand): string {
     }
 }
 
+
+function getCommandDescriptionFr(cmd: PossibleCommand): string {
+    switch (cmd) {
+        case 'NEW_GAME': return 'Commencer une nouvelle partie';
+
+        case 'SET_DIFFICULTY_EXPERT': return 'Chaque joueur doit commencer et finir avec un double';
+        case 'SET_DIFFICULTY_MEDIUM': return 'Chaque joueur doit finir avec un double';
+        case 'SET_DIFFICULTY_EASY': return 'Pas de contrainte';
+
+        case 'SET_PLAYER_COUNT_1': return 'Jouer seul';
+        case 'SET_PLAYER_COUNT_2': return 'Jouer à 2';
+        case 'SET_PLAYER_COUNT_3': return 'Jouer à 3';
+        case 'SET_PLAYER_COUNT_4': return 'Jouer à 4';
+        case 'SET_PLAYER_COUNT_5': return 'Jouer à 5';
+        case 'SET_PLAYER_COUNT_6': return 'Jouer à 6';
+        case 'SET_PLAYER_COUNT_7': return 'Jouer à 7';
+        case 'SET_PLAYER_COUNT_8': return 'Jouer à 8';
+        case 'SET_PLAYER_COUNT_9': return 'Jouer à 9';
+        case 'SET_PLAYER_COUNT_10': return 'Jouer à 10';
+
+        case 'ANSWER_YES': return game.state === 'WAITING_STOP_GAME_CONFIRMATION' ? 'Arrêter la partie' : 'Quitter le programme';
+        case 'ANSWER_NO': return game.state === 'WAITING_STOP_GAME_CONFIRMATION' ? 'Continuer' : 'Annuler';
+
+        case 'START_GAME': return 'Démarrer la partie';
+        case 'STOP_GAME': return 'Arrêter la partie en cours';
+        case 'PAUSE_GAME': return 'Mettre la reconnaissance vocale en pause';
+        case 'CONTINUE_GAME': return 'Reprendre la reconnaissance vocale';
+        case 'QUIT': return 'Quitter le programme';
+        case 'CORRECTION': return 'Réinitialiser le tour courant';
+        case 'NEXT_TURN': return 'Passer au tour du joueur suivant';
+        case '<score>': return `Donner un score comme "${voiceCommand2Text['SCORE_1x17']}" ou "${voiceCommand2Text['SCORE_2x6']}"`;
+    }
+}
+
+
 function printPossibleCommands() {
     const maxLen = Math.max(...(game.possibleThingsToSay.map(p => p.textToSay.length)));
-    const commandLines: string [] = ['Possible things to say:', ''];
+    const commandLines: string [] = [language === 'en' ? 'Possible things to say:' : 'Commandes vocales possibles:', ''];
     for (const command of game.possibleThingsToSay) {
         commandLines.push(`${command.textToSay.padEnd(maxLen)}     ${command.description}`);
     }
@@ -147,7 +203,6 @@ function printPossibleCommands() {
 
 function updatePossibleThingsToSay() {
     const possibleCommands = getPossibleCommands(game.state);
-    console.log(possibleCommands);
     game.possibleThingsToSay = [];
     for (const command of possibleCommands) {
         game.possibleThingsToSay.push({
@@ -155,6 +210,15 @@ function updatePossibleThingsToSay() {
             textToSay: getVocalCommand(command),
             description: getCommandDescription(command)
         });
+    }
+}
+
+
+function niveau(d: Difficulty) {
+    switch (d) {
+        case 'expert': return 'expert';
+        case 'medium': return 'moyen';
+        case 'easy': return 'facile';
     }
 }
 
@@ -180,20 +244,30 @@ function render() {
         }
         case 'WAITING_FOR_START':
         case 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START': {
-            console.log(`Difficulty:          ${game.difficulty}`);
-            console.log(`Number of players:   ${game.numberOfPlayers}`);
+            if (language === 'en') {
+                console.log(`Difficulty:          ${game.difficulty}`);
+                console.log(`Number of players:   ${game.numberOfPlayers}`);    
+            } else {
+                console.log(`Niveau:              ${niveau(game.difficulty)}`)
+                console.log(`Nombre de joueurs:   ${game.numberOfPlayers}`);
+            }
             break;
         }
         default: {
             printScoreBoard(game);
             if (game.state === 'GAME_PAUSED') {
                 console.log();
-                console.log(' < Game paused >');
+                console.log(language === 'en' ? ' < Game paused >' : '< Pause >');
                 break;
             }
             if (game.state === 'GAME_WON' || game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
                 console.log();
-                console.log(`${game.playerStatuses[game.currentPlayer].name} won !`);
+                if (language === 'en') {
+                    console.log(`${game.playerStatuses[game.currentPlayer].name} won !`);
+                } else {
+                    console.log(`${game.playerStatuses[game.currentPlayer].name} a gagné !`);
+                }
+
                 if (game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
                     printQuitConfirmationMessage();
                 }
@@ -205,7 +279,11 @@ function render() {
             }
             if (game.state === 'WAITING_STOP_GAME_CONFIRMATION') {
                 console.log();
-                console.log('Are you sure you want to stop the current game ?');
+                if (language === 'en') {
+                    console.log('Are you sure you want to stop the current game ?');
+                } else {
+                    console.log('Etes-vous sûr de vouloir arrêter cette partie ?');
+                }
                 break;
             }
         }
@@ -231,7 +309,11 @@ function getDartDescription(dart: DartPlayed) {
 
 
 function printScoreBoard(g: PlayingState) {
-    console.log(`Difficulty: ${g.difficulty}`);
+    if (language === 'en') {
+        console.log(`Difficulty: ${g.difficulty}`);
+    } else {
+        console.log(`Niveau: ${niveau(g.difficulty)}`);
+    }
     console.log();
 
     for (let i = 0 ; i < g.playerStatuses.length ; i++) {
@@ -242,15 +324,23 @@ function printScoreBoard(g: PlayingState) {
     console.log();
     if (g.state === 'PLAYING') {
         if (g.playerStatuses[g.currentPlayer].needADoubleToStart) {
-            console.log(`${g.playerStatuses[g.currentPlayer].name} need a double to start`);
+            if (language === 'en') {
+                console.log(`${g.playerStatuses[g.currentPlayer].name} need a double to start`);
+            } else {
+                console.log(`${g.playerStatuses[g.currentPlayer].name} doit faire un double pour démarrer`);
+            }
         }
         for (let i = 0 ; i < g.dartsPlayed.length ; i++) {
             const dart = g.dartsPlayed[i];
-            console.log(`Dart ${i + 1}: ${isIgnored(dart) ? 'ignored' : getDartScore(dart)} (${getDartDescription(dart)})`);
+            if (language === 'en') {
+                console.log(`Dart ${i + 1}: ${isIgnored(dart) ? 'ignored' : getDartScore(dart)} (${getDartDescription(dart)})`);
+            } else {
+                console.log(`Fléchette ${i + 1}: ${isIgnored(dart) ? 'ignorée' : getDartScore(dart)} (${getDartDescription(dart)})`);
+            }
         }
 
         if (g.dartsPlayed.length < N_DARTS_PER_TURN) {
-            console.log(`Dart ${g.dartsPlayed.length + 1}:`);
+            console.log(`${language === 'en' ? 'Dart' : 'Fléchette'} ${g.dartsPlayed.length + 1}:`);
         }
     }
 
@@ -260,13 +350,21 @@ function printScoreBoard(g: PlayingState) {
 
 function processUnrecognizedInput(text: string) {
     console.log();
-    console.log(`I didn't understand: "${text}"`);
+    if (language === 'en') {
+        console.log(`I didn't understand: "${text}"`);
+    } else {
+        console.log(`Je n'ai pas compris: "${text}"`);
+    }
 }
 
 
 function processCommand(cmd: string) {
     if (!isVoiceCommand(cmd)) {
-        console.error(`Unknown command: '${cmd}'`);
+        if (language === 'en') {
+            console.error(`Unknown command: '${cmd}'`);
+        } else {
+            console.error(`Commande inconnue: '${cmd}'`);
+        }
         return;
     }
     switch (cmd) {
@@ -380,18 +478,19 @@ function startGame() {
 
     for (let i = 1 ; i <= lastNumberOfPlayers ; i++) {
         playerStatuses.push({
-            name: `Player ${i}`,
+            name: language === 'en' ? `Player ${i}` : `Joueur ${i}`,
             score: 501,
             needADoubleToStart: lastDifficulty === 'expert',
         });
         playerStatusesLastRound.push({
-            name: `Player ${i}`,
+            name: language === 'en' ? `Player ${i}` : `Joueur ${i}`,
             score: 501,
             needADoubleToStart: lastDifficulty === 'expert',
         });
     }
 
     game = {
+        language,
         state: 'PLAYING',
         possibleThingsToSay: [],
         difficulty: lastDifficulty,
@@ -467,6 +566,7 @@ function getPossibleCommands(state: State): PossibleCommand[] {
 
 function waitForStart() {
     game = {
+        language,
         state: 'WAITING_FOR_START',
         possibleThingsToSay: [],
         numberOfPlayers: lastNumberOfPlayers,
@@ -668,7 +768,7 @@ function processEvent(event: GameEvent): boolean {
                 if (event.answer === Answer.YES) {
                     quit();
                 } else {
-                    game = BLANK_STATE;
+                    game = getBlankState();
                     return true;
                 }
             }
@@ -714,7 +814,7 @@ function processEvent(event: GameEvent): boolean {
         case 'WAITING_STOP_GAME_CONFIRMATION': {
             if (event.type === 'ANSWER') {
                 if (event.answer === Answer.YES) {
-                    game = BLANK_STATE
+                    game = getBlankState();
                 } else {
                     continuePlaying();
                 }
@@ -777,6 +877,9 @@ function printUsage() {
     console.log('  play           Starts the game engine that begins to listen for voice commands');
     console.log();
     console.log('OPTIONS:');
+    console.log('  --language en | fr');
+    console.log('           Sets the language: en=English, fr=French (default = English)');
+    console.log();
     console.log('  --difficulty  expert | medium | easy');
     console.log('           Sets the initial game difficulty (default = easy)');
     console.log();
@@ -796,6 +899,7 @@ function printUsage() {
 }
 
 interface ParsedArguments {
+    language: Language;
     difficulty: Difficulty;
     players: number;
     port?: number;
@@ -806,6 +910,7 @@ interface ParsedArguments {
 
 function parseArguments(): ParsedArguments {
     const parsed: ParsedArguments = {
+        language: 'en',
         difficulty: 'easy',
         players: 2,
     };
@@ -821,6 +926,20 @@ function parseArguments(): ParsedArguments {
 
         if (arg === 'play' || arg === 'list_devices') {
             parsed.command = arg;
+            continue;
+        }
+
+        if (arg === '--language') {
+            if (i === args.length) {
+                console.error(`Missing ${arg} argument`);
+                exit(1);
+            }
+            const argValue = args[i++];
+                if (argValue !== 'en' && argValue !== 'fr') {
+                console.error(`Invalid ${arg} argument: ${argValue}`);
+                exit(1);
+            }
+            parsed.language = argValue;
             continue;
         }
 
