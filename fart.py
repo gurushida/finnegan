@@ -135,71 +135,84 @@ def callback(indata, frames, time, status):
     q.put(bytes(indata))
 
 
-parser = argparse.ArgumentParser(description='''A program that listens to a microphone and tries to parse the
-text recognized by the Vosk speech recognition API to identify patterns described in the given configuration file.''')
-parser.add_argument(
-    '-l', '--list-devices', action='store_true',
-    help='show list of audio devices and exit')
+def printUsage():
+    print("Usage: python3 fart.py [OPTIONS]")
+    print()
+    print('-l / --list-devices           Print the available audio devices and exit')
+    print('-d DEV / --device DEV         Listen from the audio device DEV')
+    print('-r RATE / --samplerate RATE   Define the sampling rate to use')
+    print()
+    print('<config>                      A json configuration file that describes the speech')
+    print('                              recognition model to use, the symbolic tokens to recognize')
+    print('                              (like associating both "your" and "you\'re" to a symbolic token')
+    print('                              "YOUR"), and the token combinations to recognize (like associating')
+    print('                              2 symbolic tokens "YOUR" and "TURN" to the symbol "YOUR_TURN"')
+    print()
 
-parser.add_argument(
-    '-d', '--device', type=int_or_str,
-    help='input device (numeric ID or substring)')
 
-parser.add_argument(
-    '-r', '--samplerate', type=int, help='sampling rate')
+args = sys.argv[1:]
 
-parser.add_argument(
-    'config', type=str, help="""A json configuration file
-that describes the speech recognition model to use, the symbolic tokens to recognize
-(like associating both "your" and "you're" to a symbolic token "YOUR"), and the token
-combinations to recognize (like associating 2 symbolic tokens "YOUR" and "TURN" to
-the symbol "YOUR_TURN")"""
-)
+if len(args) == 0:
+    printUsage()
+    exit(0)
 
-args, remaining = parser.parse_known_args()
+device = None
+samplerate = None
 
-if args.list_devices:
-    print(sd.query_devices())
-    parser.exit(0)
+while len(args) > 0:
+    arg = args.pop(0)
 
-try:
-    if args.config is None:
-        print('Missing config file !')
-        exit(1)
+    if arg == '-l' or arg == '--list-devices':
+        print(sd.query_devices())
+        exit(0)
 
-    with open(args.config, 'r') as myfile:
-        data = myfile.read()
+    if arg == '-d' or arg == '--device':
+        if len(args) == 0:
+            printUsage()
+            exit(1)
+        device = int_or_str(args.pop(0))
 
-    config = json.loads(data)
-    tokenData = prepareData(config['tokens'])
-    patternData = prepareData(config['patterns'])
+    if arg == '-r' or arg == '--samplerate':
+        if len(args) == 0:
+            printUsage()
+            exit(1)
+        samplerate = int_or_str(args.pop(0))
 
-    if args.samplerate is None:
-        device_info = sd.query_devices(args.device, 'input')
-        # soundfile expects an int, sounddevice provides a float:
-        args.samplerate = int(device_info['default_samplerate'])
+    configFile = arg
 
-    model = vosk.Model(config['vosk_model_path'])
 
-    with sd.RawInputStream(samplerate=args.samplerate, blocksize = 8000, device=args.device, dtype='int16',
+if configFile is None:
+    printUsage()
+    exit(0)
+
+with open(configFile, 'r') as myfile:
+    data = myfile.read()
+
+config = json.loads(data)
+tokenData = prepareData(config['tokens'])
+patternData = prepareData(config['patterns'])
+
+if samplerate is None:
+    device_info = sd.query_devices(device, 'input')
+    # soundfile expects an int, sounddevice provides a float:
+    samplerate = int(device_info['default_samplerate'])
+
+model = vosk.Model(config['vosk_model_path'])
+
+with sd.RawInputStream(samplerate=samplerate, blocksize = 8000, device=device, dtype='int16',
                             channels=1, callback=callback):
-            rec = vosk.KaldiRecognizer(model, args.samplerate)
-            while True:
-                data = q.get()
-                if rec.AcceptWaveform(data):
-                    res = rec.Result()
-                    obj = json.loads(res)
-                    text = obj['text']
-                    if len(text) > 0:
-                        patterns = tryToParsePatterns(text, tokenData, patternData)
-                        if patterns is None:
-                            print('???:%s' % text)
-                        else:
-                            for pattern in patterns:
-                                print('CMD:%s' % pattern) 
-
-except KeyboardInterrupt:
-    parser.exit(0)
-except Exception as e:
-    parser.exit(type(e).__name__ + ': ' + str(e))
+    rec = vosk.KaldiRecognizer(model, samplerate)
+    while True:
+        data = q.get()
+        if rec.AcceptWaveform(data):
+            res = rec.Result()
+            obj = json.loads(res)
+            text = obj['text']
+            if len(text) > 0:
+                patterns = tryToParsePatterns(text, tokenData, patternData)
+                if patterns is None:
+                    print('???:%s' % text)
+                else:
+                    for pattern in patterns:
+                        print('CMD:%s' % pattern)
 
