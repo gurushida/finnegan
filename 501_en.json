@@ -88,7 +88,7 @@
         "TWENTY": ["twenty"],
         "DOUBLE": ["double", "doubled", "dabbled", "babel", "the ball", "the bowl", "that will", "they will", "the old",
                    "the whole", "devil", "dublin", "the will"],
-        "TRIPLE": ["triple", "people", "drupal", "treble", "dribble"],
+        "TRIPLE": ["triple", "people", "drupal", "treble", "dribble", "tripled"],
         "BULLSEYE": ["bullseye", "bull's eye", "bowles eye"],
         "FIFTY": ["fifty", "shifty"]
     },
