@@ -156,6 +156,7 @@ if len(args) == 0:
     printUsage()
     exit(0)
 
+configFile = None
 device = None
 samplerate = None
 
@@ -171,12 +172,14 @@ while len(args) > 0:
             printUsage()
             exit(1)
         device = int_or_str(args.pop(0))
+        continue
 
     if arg == '-r' or arg == '--samplerate':
         if len(args) == 0:
             printUsage()
             exit(1)
         samplerate = int_or_str(args.pop(0))
+        continue
 
     configFile = arg
 
