@@ -845,9 +845,14 @@ function processEndOfTurn() {
 
 function startServer(port: number) {
     const server = http.createServer((req, res) => {
-        res.setHeader('Content-Type', 'application/json');
-        res.writeHead(200);
-        res.end(JSON.stringify(game, null, 2));
+        if (req.method === 'GET' && req.url === '/state') {
+            res.setHeader('Content-Type', 'application/json');
+            res.writeHead(200);
+            res.end(JSON.stringify(game, null, 2));
+        } else {
+            res.writeHead(404);
+            res.end();
+        }
     });
     server.listen(port);
 }
