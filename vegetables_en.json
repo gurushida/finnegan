@@ -1,0 +1,37 @@
+{
+    "//0 comment": "This is an example to explain how to recognize your own things",
+    "//         ": "Run it with: 'python3 fart.py vegetables_en.json'",
+
+    "vosk_model_path": "vosk-model-small-en-us-0.15",
+
+    "//1 comment": "Lists here the tokens you want to recognize. For each token,",
+    "//2        ": "you specify an array of strings where each string is a way",
+    "//3        ": "to recognize the sound you are trying to match. ",
+    "//4        ": "Use similar words that may be misidentified by the speech recognition",
+    "//5        ": "to increase the coverage of the recognition", 
+    "tokens": {
+        "CARROT": ["carrot", "car hot"],
+        "TOMATO": ["tomato"],
+        "POTATO": ["potato"],
+        "ONION": ["onion"],
+        "FRY": ["fry", "fried", "fries"],
+        "PEEL": ["peel"]
+    },
+
+    "//6 comment": "Lists here the patterns you want to recognize.",
+    "//7        ": "Each pattern is specified by an array of strings where each string",
+    "//8        ": "is a sequence of tokens as defined above. The pattern key is the string",
+    "//9        ": "that will be printed with a 'CMD:' prefix when a match is found.",
+    "//10       ": "For instance, if you say 'fry carrot' and the speech recognition",
+    "//11       ": "engine understands 'fried car hot', then there will be a match and 'CMD:fry carrot'",
+    "//12       ": "will be printed.",
+    "patterns": {
+        "// comment": "Use similar words that may be misidentified by the speech recognition",
+        "peel tomato": ["PEEL TOMATO"],
+        "peel potato": ["PEEL POTATO"],
+        "peel onion": ["PEEL ONION"],
+        "fry carrot": ["FRY CARROT"],
+        "fry potato": ["FRY POTATO"],
+        "fry onion": ["FRY ONION"]
+    }
+}
