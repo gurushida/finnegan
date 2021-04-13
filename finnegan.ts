@@ -155,12 +155,6 @@ function msg(msgId: MessageId) {
 }
 
 
-function printQuitConfirmationMessage() {
-    console.log();
-    console.log(msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT'));
-}
-
-
 function getVocalCommand(cmd: PossibleCommand): string {
     if (cmd === '<score>') return cmd;
     return `"${voiceCommand2Text[cmd] as string}"`;
@@ -260,7 +254,6 @@ function render() {
             break;
         }
         case 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING': {
-            printQuitConfirmationMessage();
             break;
         }
         case 'WAITING_FOR_START':
@@ -274,33 +267,16 @@ function render() {
         }
         default: {
             printScoreBoard(game);
-            if (game.state === 'GAME_PAUSED') {
-                console.log();
-                console.log(`< ${msg('GAME_IS_PAUSED')} >`);
-                break;
-            }
-            if (game.state === 'GAME_WON' || game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
-                console.log();
-                console.log(`${msg('PLAYER')} ${game.currentPlayer + 1} ${msg('_WON')}`);
-
-                if (game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON') {
-                    printQuitConfirmationMessage();
-                }
-                break;
-            }
-            if (game.state === 'WAITING_QUIT_CONFIRMATION__PLAYING') {
-                printQuitConfirmationMessage();
-                break;
-            }
-            if (game.state === 'WAITING_STOP_GAME_CONFIRMATION') {
-                console.log();
-                console.log(msg('ARE_YOU_SURE_YOU_TO_STOP_THE_GAME'));
-                break;
-            }
+            break;
         }
     }
 
     console.log();
+    if (game.messageForUser) {
+        console.log(game.messageForUser);
+        console.log();
+    }
+
     printPossibleCommands();
 }
 
@@ -495,6 +471,7 @@ function startGame() {
         playerStatuses,
         dartsPlayed: [],
         currentPlayer: 0,
+        messageForUser: undefined,
     };
 }
 
@@ -570,47 +547,56 @@ function waitForStart() {
         alternativeLanguages: game.alternativeLanguages,
         numberOfPlayers: lastNumberOfPlayers,
         difficulty: lastDifficulty,
+        messageForUser: undefined,
     };
 }
 
 
 function waitForQuitAnswerWhileNotPlaying() {
     game.state = 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
+    game.messageForUser = msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT');
 }
 
 
 function waitForQuitAnswerWhenGameIsWon() {
     game.state = 'WAITING_QUIT_CONFIRMATION__GAME_WON';
+    game.messageForUser = msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT');
 }
 
 
 function waitForQuitAnswerWhileWaitingForStart() {
     game.state = 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
+    game.messageForUser = msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT');
 }
 
 
 function waitForQuitAnswerWhilePlaying() {
     game.state = 'WAITING_QUIT_CONFIRMATION__PLAYING';
+    game.messageForUser = msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT');
 }
 
 
 function pauseGame() {
     game.state = 'GAME_PAUSED';
+    game.messageForUser = `< ${msg('GAME_IS_PAUSED')} >`;
 }
 
 
 function waitForStopGameAnswer() {
     game.state = 'WAITING_STOP_GAME_CONFIRMATION';
+    game.messageForUser = msg('ARE_YOU_SURE_YOU_TO_STOP_THE_GAME');
 }
 
 
 function continuePlaying() {
     game.state = 'PLAYING';
+    game.messageForUser = undefined;
 }
 
 
 function gameOver() {
     game.state = 'GAME_WON';
+    game.messageForUser = `${msg('PLAYER')} ${(game as PlayingState).currentPlayer + 1} ${msg('_WON')}`
 }
 
 

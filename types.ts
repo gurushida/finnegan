@@ -293,6 +293,10 @@ export type State = 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
 export interface BaseGameState {
     language: string;
     state: State;
+
+    // A indication or a question to display to the user
+    messageForUser?: string;
+
     // The possible commands
     possibleThingsToSay: PossibleThingToSay[];
     alternativeLanguages: Record<string, string>;

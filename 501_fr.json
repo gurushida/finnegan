@@ -50,7 +50,7 @@
         "ANGLAIS": ["anglais"],
         "NOUVELLE": ["nouvelle", "nouvel", "nouvelles"],
         "PARTIE": ["partie", "parti", "partis", "parties", "partit"],
-        "PAUSE": ["pause", "pose"],
+        "PAUSE": ["pause", "pose", "posent", "poses", "pauses"],
         "REPRENDRE": ["reprendre"],
         "COMMENCE": ["commence", "commencent"],
         "STOP": ["stop", "staps"],
