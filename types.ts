@@ -1,6 +1,53 @@
 export type Language = 'en' | 'fr';
 
 /**
+ * The MessageId type describes the IDs of all the text messages
+ * that can be presented to the user. 
+ */
+export const messageIDs = [
+    'DIFFICULTY',
+    'EASY',
+    'MEDIUM',
+    'EXPERT',
+    'EASY_LEVEL',
+    'MEDIUM_LEVEL',
+    'EXPERT_LEVEL',
+    'PLAYER',
+    'NUMBER_OF_PLAYERS',
+    '1_PLAYER_GAME',
+    '2_PLAYER_GAME',
+    '3_PLAYER_GAME',
+    '4_PLAYER_GAME',
+    '5_PLAYER_GAME',
+    '6_PLAYER_GAME',
+    '7_PLAYER_GAME',
+    '8_PLAYER_GAME',
+    '9_PLAYER_GAME',
+    '10_PLAYER_GAME',
+    'NEW_GAME',
+    'STOP_GAME',
+    'PAUSE_GAME',
+    'GAME_IS_PAUSED',
+    'BACK_FROM_PAUSE',
+    'CANCEL',
+    'QUIT',
+    'CORRECTION',
+    'START_GAME',
+    'NEXT_TURN',
+    'ARE_YOU_SURE_YOU_WANT_TO_QUIT',
+    'ARE_YOU_SURE_YOU_TO_STOP_THE_GAME',
+    'SCORE',
+    'POSSIBLE_THINGS_TO_SAY',
+    '_WON',
+    'NEEDS_A_DOUBLE_TO_START',
+    'DART',
+    'IGNORED',
+    'I_DIDNT_UNDERSTAND',
+    'UNKNOWN_COMMAND',
+] as const;
+export type MessageId = typeof messageIDs[number];
+
+/**
  * The VoiceCommand type describes all the supported commands that can be sent
  * by fart.py
  */
@@ -172,7 +219,6 @@ export type GameEvent = DifficultyEvent | PlayerCountEvent | AnswerEvent | Score
 
 
 export interface PlayerStatus {
-    name: string;
     score: number;
     needADoubleToStart: boolean;
 }
@@ -229,7 +275,7 @@ export type State = 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
  | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
 
 export interface BaseGameState {
-    language: Language;
+    language: string;
     state: State;
     // The possible commands
     possibleThingsToSay: PossibleThingToSay[];
@@ -278,4 +324,12 @@ export interface FartConfig {
     // Associates to each symbolic command to recognize the list of token symbols
     // that will be accepted
     patterns: Record<VoiceCommand, string[]>;
+}
+
+export interface FinneganConfig extends FartConfig {
+    // A description of the language used by this configuration like 'English' or 'Français'
+    language: string;
+
+    // All the UI messages, preferrably in the language the game is played in
+    messages: Record<MessageId, string>;
 }
