@@ -47,6 +47,13 @@ export const messageIDs = [
 ] as const;
 export type MessageId = typeof messageIDs[number];
 
+
+// If the voice recognition receives a command prefixed with this
+// string, the remaining will be interpreted as the path of
+// of a config file to load
+export const SWITCH_LANGUAGE_COMMAND_PREFIX = "LOAD_CONFIG:"
+
+
 /**
  * The VoiceCommand type describes all the supported commands that can be sent
  * by fart.py
@@ -269,6 +276,15 @@ export interface PossibleThingToSay {
     description: string;
 }
 
+/**
+ * Same as PossibleThingToSay, but for custom commands to switch
+ * to another language.
+ */
+export interface LanguageSwitchCommand {
+    textToSay: string;
+    description: string;
+}
+
 export type State = 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
  | 'WAITING_FOR_START' | 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START'
  | 'PLAYING' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION__PLAYING' | 'GAME_WON'
@@ -279,6 +295,7 @@ export interface BaseGameState {
     state: State;
     // The possible commands
     possibleThingsToSay: PossibleThingToSay[];
+    alternativeLanguages: Record<string, string>;
 }
 
 export interface ValuelessGameState extends BaseGameState {
@@ -332,4 +349,9 @@ export interface FinneganConfig extends FartConfig {
 
     // All the UI messages, preferrably in the language the game is played in
     messages: Record<MessageId, string>;
+
+    // Optional commands that allow to switch to another language
+    // For this to work, the key must be of the form
+    // "LOAD_CONFIG:<path to config file>"
+    alternativeLanguageDescriptions?: Record<string, string>;
 }

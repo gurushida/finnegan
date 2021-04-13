@@ -41,9 +41,13 @@
         "I_DIDNT_UNDERSTAND": "Je n'ai pas compris",
         "UNKNOWN_COMMAND": "Commande inconnue"
     },
+    "alternativeLanguageDescriptions": {
+        "LOAD_CONFIG:501_en.json": "Jouer en anglais"
+    },
     "vosk_model_path": "vosk-model-small-fr-pguyot-0.3",
     "tokens": {
         "BINIOU": ["biniou", "binious", "billot", "billots", "bignon", "bignons", "baignant", "mignot", "bing", "vignot", "bignon"],
+        "ANGLAIS": ["anglais"],
         "NOUVELLE": ["nouvelle", "nouvel", "nouvelles"],
         "PARTIE": ["partie", "parti", "partis", "parties", "partit"],
         "PAUSE": ["pause", "pose"],
@@ -172,6 +176,7 @@
         "SCORE_3x19": ["TRIPLE DIX_NEUF"],
         "SCORE_3x20": ["TRIPLE VINGT"],
         "SCORE_1x25": ["VINGT_CINQ"],
-        "SCORE_2x25": ["CINQUANTE", "DOUBLE VINGT_CINQ"]
+        "SCORE_2x25": ["CINQUANTE", "DOUBLE VINGT_CINQ"],
+        "LOAD_CONFIG:501_en.json": ["BINIOU ANGLAIS"]
     }
 }

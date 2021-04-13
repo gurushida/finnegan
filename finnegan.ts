@@ -4,7 +4,8 @@ import { exit } from 'process';
 import { readFileSync } from 'fs';
 import { GameEvent, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
     DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand,
-    voiceCommands, Difficulty, State, ValuelessGameState, MessageId, FinneganConfig, messageIDs } from './types';
+    voiceCommands, Difficulty, State, ValuelessGameState, MessageId, FinneganConfig, messageIDs, SWITCH_LANGUAGE_COMMAND_PREFIX
+} from './types';
 import http from 'http';
 import { Readable } from 'node:stream';
 
@@ -12,6 +13,7 @@ import { Readable } from 'node:stream';
 function getBlankState(language: string): ValuelessGameState {
     return {
         language,
+        alternativeLanguages: {},
         state: 'NOT_PLAYING',
         possibleThingsToSay: [],
     };
@@ -20,11 +22,52 @@ function getBlankState(language: string): ValuelessGameState {
 
 let game: GameState = getBlankState('');
 
+let device: string | undefined;
+let samplerate: string | undefined;
+let port: number | undefined;
 let playerStatusesLastRound: PlayerStatus[] = [];
 let lastNumberOfPlayers = 2;
 let lastDifficulty: Difficulty = 'easy';
 let config: FinneganConfig;
 let voiceCommand2Text: Partial<Record<VoiceCommand, string>> = {};
+let fartProcess: child.ChildProcessByStdio<null, Readable, null> | undefined;
+
+
+function populateAlternativeLanguageMap() {
+    game.alternativeLanguages = {};
+    for (const pattern in config.patterns) {
+        if (pattern.startsWith(SWITCH_LANGUAGE_COMMAND_PREFIX)) {
+            if (!config.alternativeLanguageDescriptions) {
+                console.error('Missing property \'alternativeLanguageDescriptions\'');
+                exit(1);
+            }
+            const tokenSequence = (config.patterns as any)[pattern];
+            if (!tokenSequence) {
+                console.error(`Missing token sequence for \'${pattern}\'`);
+                exit(1);
+            }
+            const textToSay = `"${tokenSequence2TextToSay(tokenSequence[0])}"`;
+            const description = config.alternativeLanguageDescriptions[pattern];
+            game.alternativeLanguages[textToSay] = description;
+        }
+    }
+}
+
+
+function tokenSequence2TextToSay(tokenSequence: string): string {
+    const result: string [] = [];
+    const tokens = tokenSequence.split(' ');
+    for (const token of tokens) {
+        const alternative = config.tokens[token];
+        if (!alternative) {
+            console.error(`Missing token ${token} in configuration file !`);
+            exit(1);
+        }
+        result.push(alternative[0]);
+    }
+
+    return result.join(' ');
+}
 
 
 /**
@@ -40,18 +83,7 @@ function populateVoiceCommandMap() {
             exit(1);
         }
 
-        const result: string [] = [];
-
-        for (const token of tokenSequence[0].split(' ')) {
-            const alternative = config.tokens[token];
-            if (!alternative) {
-                console.error(`Missing token ${token} for command ${cmd} in configuration file !`);
-                exit(1);
-            }
-            result.push(alternative[0]);
-        }
-
-        voiceCommand2Text[cmd] = result.join(' ');
+        voiceCommand2Text[cmd] = tokenSequence2TextToSay(tokenSequence[0]);
     }
 }
 
@@ -76,9 +108,7 @@ function checkLanguageData(cfg: FinneganConfig) {
 }
 
 
-let fartProcess: child.ChildProcessByStdio<null, Readable, null> | undefined;
-
-function startFart(configFile: string, device: string | undefined, samplerate: string | undefined) {
+function startFart(configFile: string) {
     if (fartProcess) {
         fartProcess.kill();
     }
@@ -107,16 +137,14 @@ function startFart(configFile: string, device: string | undefined, samplerate: s
 }
 
 
-async function startGameEngine(args: ParsedArguments) {
-    const rawdata = readFileSync(args.configFile);
+async function startGameEngine(configFile: string) {
+    const rawdata = readFileSync(configFile);
     config = JSON.parse(rawdata.toString());
     checkLanguageData(config);
     populateVoiceCommandMap();
+    populateAlternativeLanguageMap();
 
-    lastDifficulty = parsed.difficulty;
-    lastNumberOfPlayers = parsed.players
-
-    startFart(args.configFile, args.device, args.samplerate);
+    startFart(configFile);
     updatePossibleThingsToSay();
     render();
 }
@@ -174,10 +202,15 @@ function getCommandDescription(cmd: PossibleCommand): string {
 
 
 function printPossibleCommands() {
-    const maxLen = Math.max(...(game.possibleThingsToSay.map(p => p.textToSay.length)));
+    const maxLen = Math.max(...(game.possibleThingsToSay.map(p => p.textToSay.length)),
+                            ...Object.keys(game.alternativeLanguages).map(p => p.length));
     const commandLines: string [] = [`${msg('POSSIBLE_THINGS_TO_SAY')}:`, ''];
     for (const command of game.possibleThingsToSay) {
         commandLines.push(`${command.textToSay.padEnd(maxLen)}     ${command.description}`);
+    }
+    commandLines.push('');
+    for (const altLang in game.alternativeLanguages) {
+        commandLines.push(`${altLang.padEnd(maxLen)}     ${game.alternativeLanguages[altLang]}`);
     }
 
     const maxLineLen = Math.max(...(commandLines.map(line => line.length)));
@@ -321,6 +354,14 @@ function processUnrecognizedInput(text: string) {
 
 
 function processCommand(cmd: string) {
+    if (cmd.startsWith(SWITCH_LANGUAGE_COMMAND_PREFIX)) {
+        const configFile = cmd.substring(SWITCH_LANGUAGE_COMMAND_PREFIX.length);
+        setTimeout(() => {
+            startGameEngine(configFile);
+        }, 1);
+        return;
+    }
+
     if (!isVoiceCommand(cmd)) {
         console.error(`${msg('UNKNOWN_COMMAND')}: '${cmd}'`);
         return;
@@ -449,6 +490,7 @@ function startGame() {
         language: config.language,
         state: 'PLAYING',
         possibleThingsToSay: [],
+        alternativeLanguages: game.alternativeLanguages,
         difficulty: lastDifficulty,
         playerStatuses,
         dartsPlayed: [],
@@ -525,6 +567,7 @@ function waitForStart() {
         language: config.language,
         state: 'WAITING_FOR_START',
         possibleThingsToSay: [],
+        alternativeLanguages: game.alternativeLanguages,
         numberOfPlayers: lastNumberOfPlayers,
         difficulty: lastDifficulty,
     };
@@ -852,27 +895,15 @@ function printUsage() {
     console.log();
 }
 
-interface ParsedArguments {
-    configFile: string;
-    difficulty: Difficulty;
-    players: number;
-    port?: number;
-    device?: string;
-    samplerate?: string;
-}
 
-function parseArguments(): ParsedArguments {
-    const parsed: ParsedArguments = {
-        configFile: '',
-        difficulty: 'easy',
-        players: 2,
-    };
+function parseArguments(): string {
     let args = process.argv.slice(2);
     if (args.length === 0) {
         printUsage();
         exit(0);
     }
 
+    let configFile: string | undefined;
     let i = 0;
     while (i < args.length) {
         const arg = args[i++];
@@ -892,7 +923,7 @@ function parseArguments(): ParsedArguments {
                 console.error(`Invalid ${arg} argument: ${argValue}`);
                 exit(1);
             }
-            parsed.difficulty = argValue;
+            lastDifficulty = argValue;
             continue;
         }
 
@@ -902,8 +933,8 @@ function parseArguments(): ParsedArguments {
                 exit(1);
             }
             const argValue = args[i++];
-                parsed.players = parseInt(argValue);
-            if (isNaN(parsed.players) || parsed.players < 1 || parsed.players > 10) {
+                lastNumberOfPlayers = parseInt(argValue);
+            if (isNaN(lastNumberOfPlayers) || lastNumberOfPlayers < 1 || lastNumberOfPlayers > 10) {
                 console.error(`Invalid ${arg} argument: ${argValue}`);
                 exit(1);
             }
@@ -916,8 +947,8 @@ function parseArguments(): ParsedArguments {
                 exit(1);
             }
             const argValue = args[i++];
-                parsed.port = parseInt(argValue);
-            if (isNaN(parsed.port) || parsed.port < 1024 || parsed.port > 65635) {
+                port = parseInt(argValue);
+            if (isNaN(port) || port < 1024 || port > 65635) {
                 console.error(`Invalid ${arg} argument: ${argValue}`);
                 exit(1);
             }
@@ -929,7 +960,7 @@ function parseArguments(): ParsedArguments {
                 console.error(`Missing ${arg} argument`);
                 exit(1);
             }
-            parsed.device = args[i++];
+            device = args[i++];
             continue;
         }
 
@@ -938,30 +969,30 @@ function parseArguments(): ParsedArguments {
                 console.error(`Missing ${arg} argument`);
                 exit(1);
             }
-            parsed.device = args[i++];
+            device = args[i++];
             continue;
         }
 
-        if (parsed.configFile === '') {
-            parsed.configFile = arg;
+        if (configFile === undefined) {
+            configFile = arg;
         } else {
             console.error(`Unknown argument: ${arg}`);
         }
     }
 
-    if (parsed.configFile === '') {
+    if (configFile === undefined) {
         console.error('Missing configuration file');
         exit(1);
     }
 
-    return parsed;
+    return configFile;
 }
 
 
-const parsed = parseArguments();
+const configFile = parseArguments();
 
-if (parsed.port !== undefined) {
-    startServer(parsed.port);
+if (port !== undefined) {
+    startServer(port);
 }
 
-startGameEngine(parsed);
+startGameEngine(configFile);
