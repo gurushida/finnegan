@@ -284,15 +284,19 @@ function render() {
 
 function getDartDescription(dart: DartPlayed) {
     if (dart.multiplier === 0) {
-        return '-';
+        return '  0';
     }
     if (getDartScore(dart) === 50) {
-        return '50';
+        return ' 50';
     }
     if (dart.baseValue === 25) {
-        return '25';
+        return ' 25';
     }
-    return `${dart.multiplier} x ${dart.baseValue}`;
+    switch (dart.multiplier) {
+        case 1: return `${dart.baseValue}`.padStart(3, ' ');
+        case 2: return `D${dart.baseValue}`.padStart(3, ' ');
+        case 3: return `T${dart.baseValue}`.padStart(3, ' ');
+    }
 }
 
 
@@ -313,7 +317,7 @@ function printScoreBoard(g: PlayingState) {
         const dartsPlayedThisTurn = g.playerStatuses[g.currentPlayer].dartsPlayed[g.turn];
         for (let i = 0 ; i < dartsPlayedThisTurn.length ; i++) {
             const dart = dartsPlayedThisTurn[i];
-            console.log(`${msg('DART')} ${i + 1}: ${isIgnored(dart) ? msg('IGNORED') : getDartScore(dart)} (${getDartDescription(dart)})`);
+            console.log(`${msg('DART')} ${i + 1}: ${getDartDescription(dart)}${isIgnored(dart) ? (' (' + msg('IGNORED')) + ')' : ''}`);
         }
 
         if (dartsPlayedThisTurn.length < N_DARTS_PER_TURN) {

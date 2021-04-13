@@ -46,7 +46,8 @@
     },
     "vosk_model_path": "vosk-model-small-fr-pguyot-0.3",
     "tokens": {
-        "BINIOU": ["biniou", "binious", "billot", "billots", "bignon", "bignons", "baignant", "mignot", "bing", "vignot", "bignon"],
+        "BINIOU": ["biniou", "binious", "billot", "billots", "bignon", "bignons", "baignant", "mignot", "bing", "vignot", "bignon",
+                   "beignet", "beignets"],
         "ANGLAIS": ["anglais"],
         "NOUVELLE": ["nouvelle", "nouvel", "nouvelles"],
         "PARTIE": ["partie", "parti", "partis", "parties", "partit", "par-ci"],
