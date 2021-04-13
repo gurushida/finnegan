@@ -3,7 +3,10 @@ import readline from 'readline';
 import { exit } from 'process';
 import { readFileSync } from 'fs';
 import { GameEvent, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
-    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand, voiceCommands, Difficulty, State, ValuelessGameState, Language, MessageId, FinneganConfig, messageIDs } from './types';
+    DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand,
+    voiceCommands, Difficulty, State, ValuelessGameState, MessageId, FinneganConfig, messageIDs } from './types';
+import http from 'http';
+import { Readable } from 'node:stream';
 
 
 function getBlankState(language: string): ValuelessGameState {
@@ -73,28 +76,24 @@ function checkLanguageData(cfg: FinneganConfig) {
 }
 
 
-async function startGameEngine(args: ParsedArguments) {
-    const configFile = args.language === 'en' ? 'speech_recognition_config_en.json' : 'speech_recognition_config_fr.json';
-    const rawdata = readFileSync(configFile);
-    config = JSON.parse(rawdata.toString());
-    checkLanguageData(config);
-    populateVoiceCommandMap();
+let fartProcess: child.ChildProcessByStdio<null, Readable, null> | undefined;
 
+function startFart(configFile: string, device: string | undefined, samplerate: string | undefined) {
+    if (fartProcess) {
+        fartProcess.kill();
+    }
     const fartArgs = ['-u', 'fart.py', configFile];
 
-    if (args.device) {
-        fartArgs.push('-d', args.device);
+    if (device) {
+        fartArgs.push('-d', device);
     }
 
-    if (args.samplerate) {
-        fartArgs.push('-r', args.samplerate);
+    if (samplerate) {
+        fartArgs.push('-r', samplerate);
     }
 
-    lastDifficulty = parsed.difficulty;
-    lastNumberOfPlayers = parsed.players
-
-    const p = child.spawn('python3', fartArgs, { stdio: ['ignore', 'pipe', 'ignore'] });
-    const stdoutLineReader = readline.createInterface({input: p.stdout});
+    fartProcess = child.spawn('python3', fartArgs, { stdio: ['ignore', 'pipe', 'ignore'] });
+    const stdoutLineReader = readline.createInterface({input: fartProcess.stdout});
     stdoutLineReader.on('line', (line: string) => {
         if (line.startsWith('???:')) {
             render();
@@ -105,6 +104,19 @@ async function startGameEngine(args: ParsedArguments) {
             render();
         }
     });
+}
+
+
+async function startGameEngine(args: ParsedArguments) {
+    const rawdata = readFileSync(args.configFile);
+    config = JSON.parse(rawdata.toString());
+    checkLanguageData(config);
+    populateVoiceCommandMap();
+
+    lastDifficulty = parsed.difficulty;
+    lastNumberOfPlayers = parsed.players
+
+    startFart(args.configFile, args.device, args.samplerate);
     updatePossibleThingsToSay();
     render();
 }
@@ -802,8 +814,6 @@ function processEndOfTurn() {
 }
 
 
-import http from 'http';
-
 function startServer(port: number) {
     const server = http.createServer((req, res) => {
         res.setHeader('Content-Type', 'application/json');
@@ -814,13 +824,13 @@ function startServer(port: number) {
 }
 
 function printUsage() {
-    console.log('Usage: finnegan [OPTIONS] COMMAND');
+    console.log('Usage: finnegan [OPTIONS] <config>');
     console.log();
-    console.log('COMMANDS:');
-    console.log('  list_devices   Runs "python3 fart.py -l" to show the available audio devices');
-    console.log('  play           Starts the game engine that begins to listen for voice commands');
+    console.log('Starts the game engine that begins to listen for voice commands, using the given json configuration file.');
     console.log();
     console.log('OPTIONS:');
+    console.log('  --list-devices   Runs "python3 fart.py -l" to show the available audio devices');
+    console.log();
     console.log('  --language en | fr');
     console.log('           Sets the language: en=English, fr=French (default = English)');
     console.log();
@@ -843,18 +853,17 @@ function printUsage() {
 }
 
 interface ParsedArguments {
-    language: Language;
+    configFile: string;
     difficulty: Difficulty;
     players: number;
     port?: number;
     device?: string;
     samplerate?: string;
-    command?: 'play' | 'list_devices';
 }
 
 function parseArguments(): ParsedArguments {
     const parsed: ParsedArguments = {
-        language: 'en',
+        configFile: '',
         difficulty: 'easy',
         players: 2,
     };
@@ -868,23 +877,9 @@ function parseArguments(): ParsedArguments {
     while (i < args.length) {
         const arg = args[i++];
 
-        if (arg === 'play' || arg === 'list_devices') {
-            parsed.command = arg;
-            continue;
-        }
-
-        if (arg === '--language') {
-            if (i === args.length) {
-                console.error(`Missing ${arg} argument`);
-                exit(1);
-            }
-            const argValue = args[i++];
-                if (argValue !== 'en' && argValue !== 'fr') {
-                console.error(`Invalid ${arg} argument: ${argValue}`);
-                exit(1);
-            }
-            parsed.language = argValue;
-            continue;
+        if (arg === '--list-devices') {
+            child.spawnSync('python3', ['-u', 'fart.py', '-l'], { stdio: ['ignore', 'inherit', 'inherit'] });
+            exit(0);
         }
 
         if (arg === '--difficulty') {
@@ -947,11 +942,15 @@ function parseArguments(): ParsedArguments {
             continue;
         }
 
-        console.error(`Unknown argument: ${arg}`);
+        if (parsed.configFile === '') {
+            parsed.configFile = arg;
+        } else {
+            console.error(`Unknown argument: ${arg}`);
+        }
     }
 
-    if (!parsed.command) {
-        console.error('Missing command');
+    if (parsed.configFile === '') {
+        console.error('Missing configuration file');
         exit(1);
     }
 
@@ -960,11 +959,6 @@ function parseArguments(): ParsedArguments {
 
 
 const parsed = parseArguments();
-
-if (parsed.command === 'list_devices') {
-    child.spawnSync('python3', ['-u', 'fart.py', '-l'], { stdio: ['ignore', 'inherit', 'inherit'] });
-    exit(0);
-}
 
 if (parsed.port !== undefined) {
     startServer(parsed.port);
