@@ -25,13 +25,14 @@ let game: GameState = getBlankState('');
 let device: string | undefined;
 let samplerate: string | undefined;
 let port: number | undefined;
-let playerStatusesLastRound: PlayerStatus[] = [];
 let lastNumberOfPlayers = 2;
 let lastDifficulty: Difficulty = 'easy';
 let config: FinneganConfig;
 let voiceCommand2Text: Partial<Record<VoiceCommand, string>> = {};
 let fartProcess: child.ChildProcessByStdio<null, Readable, null> | undefined;
 
+let playerScoreFromLastTurn = 501;
+let playerNeedADoubleToStartFromLastTurn = false;
 
 function populateAlternativeLanguageMap() {
     game.alternativeLanguages = {};
@@ -309,13 +310,14 @@ function printScoreBoard(g: PlayingState) {
         if (g.playerStatuses[g.currentPlayer].needADoubleToStart) {
             console.log(`${msg('PLAYER')} ${g.currentPlayer + 1} ${msg('NEEDS_A_DOUBLE_TO_START')}`);
         }
-        for (let i = 0 ; i < g.dartsPlayed.length ; i++) {
-            const dart = g.dartsPlayed[i];
+        const dartsPlayedThisTurn = g.playerStatuses[g.currentPlayer].dartsPlayed[g.turn];
+        for (let i = 0 ; i < dartsPlayedThisTurn.length ; i++) {
+            const dart = dartsPlayedThisTurn[i];
             console.log(`${msg('DART')} ${i + 1}: ${isIgnored(dart) ? msg('IGNORED') : getDartScore(dart)} (${getDartDescription(dart)})`);
         }
 
-        if (g.dartsPlayed.length < N_DARTS_PER_TURN) {
-            console.log(`${msg('DART')} ${g.dartsPlayed.length + 1}:`);
+        if (dartsPlayedThisTurn.length < N_DARTS_PER_TURN) {
+            console.log(`${msg('DART')} ${dartsPlayedThisTurn.length + 1}:`);
         }
     }
 
@@ -448,28 +450,27 @@ function processCommand(cmd: string) {
 
 
 function startGame() {
-    playerStatusesLastRound = [];
     const playerStatuses: PlayerStatus[] = [];
 
     for (let i = 1 ; i <= lastNumberOfPlayers ; i++) {
         playerStatuses.push({
             score: 501,
             needADoubleToStart: lastDifficulty === 'expert',
+            dartsPlayed: []
         });
-        playerStatusesLastRound.push({
-            score: 501,
-            needADoubleToStart: lastDifficulty === 'expert',
-        });
+        playerScoreFromLastTurn = 501;
+        playerNeedADoubleToStartFromLastTurn = (lastDifficulty === 'expert');
     }
+    playerStatuses[0].dartsPlayed.push([]);
 
     game = {
         language: config.language,
         state: 'PLAYING',
+        turn: 0,
         possibleThingsToSay: [],
         alternativeLanguages: game.alternativeLanguages,
         difficulty: lastDifficulty,
         playerStatuses,
-        dartsPlayed: [],
         currentPlayer: 0,
         messageForUser: undefined,
     };
@@ -694,7 +695,7 @@ function processEvent(event: GameEvent): boolean {
                     multiplier: event.multiplier,
                     status: 'OK',
                 };
-                game.dartsPlayed.push(dart);
+                game.playerStatuses[game.currentPlayer].dartsPlayed[game.turn].push(dart);
 
                 let tentative_score = game.playerStatuses[game.currentPlayer].score;
                 if (game.playerStatuses[game.currentPlayer].needADoubleToStart) {
@@ -818,7 +819,7 @@ function isTurnComplete() {
     if (game.state !== 'PLAYING') {
         throw 'Illegal state';
     }
-    return game.dartsPlayed.length === N_DARTS_PER_TURN;
+    return game.playerStatuses[game.currentPlayer].dartsPlayed[game.turn].length === N_DARTS_PER_TURN;
 }
 
 
@@ -826,9 +827,9 @@ function resetTurn() {
     if (game.state !== 'PLAYING') {
         throw 'Illegal state';
     }
-    game.dartsPlayed = [];
-    game.playerStatuses[game.currentPlayer].score = playerStatusesLastRound[game.currentPlayer].score;
-    game.playerStatuses[game.currentPlayer].needADoubleToStart = playerStatusesLastRound[game.currentPlayer].needADoubleToStart;
+    game.playerStatuses[game.currentPlayer].dartsPlayed[game.turn] = [];
+    game.playerStatuses[game.currentPlayer].score = playerScoreFromLastTurn;
+    game.playerStatuses[game.currentPlayer].needADoubleToStart = playerNeedADoubleToStartFromLastTurn;
 }
 
 
@@ -836,10 +837,13 @@ function processEndOfTurn() {
     if (game.state !== 'PLAYING') {
         throw 'Illegal state';
     }
-    playerStatusesLastRound[game.currentPlayer].score = game.playerStatuses[game.currentPlayer].score;
-    playerStatusesLastRound[game.currentPlayer].needADoubleToStart = game.playerStatuses[game.currentPlayer].needADoubleToStart;
-    game.dartsPlayed = [];
     game.currentPlayer = (game.currentPlayer + 1) % game.playerStatuses.length;
+    if (game.currentPlayer === 0) {
+        game.turn++;
+    }
+    playerScoreFromLastTurn = game.playerStatuses[game.currentPlayer].score;
+    playerNeedADoubleToStartFromLastTurn = game.playerStatuses[game.currentPlayer].needADoubleToStart;
+    game.playerStatuses[game.currentPlayer].dartsPlayed.push([]);
 }
 
 

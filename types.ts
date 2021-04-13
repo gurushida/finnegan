@@ -228,6 +228,14 @@ export type GameEvent = DifficultyEvent | PlayerCountEvent | AnswerEvent | Score
 export interface PlayerStatus {
     score: number;
     needADoubleToStart: boolean;
+
+    // This array describes all the darts thrown by the player
+    // Each cell dartsPlayed[n] corresponds to turn.
+    // All cells contain 3 darts except the last one, if the
+    // player is currently playing where the size of the last
+    // dartsPlayed[n] array indicates the number of darts
+    // played so far in this turn
+    dartsPlayed: DartPlayed[][];
 }
 
 /**
@@ -320,9 +328,8 @@ export interface PlayingState extends BaseGameState {
     // the number of players is the size of this array
     playerStatuses: PlayerStatus[];
 
-    // If the size of this array is 3, the player's turn is over
-    // and the game engine is waiting for the NEXT_TURN command
-    dartsPlayed: DartPlayed[];
+    // The current game turn
+    turn: number;
 
     // If the state is 'GAME_WON' or 'WAITING_QUIT_CONFIRMATION__GAME_WON'
     // the current player is the winner
