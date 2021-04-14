@@ -9,6 +9,7 @@ import vosk
 import sys
 import json
 
+from vosk import SetLogLevel
 
 # Given an array of strings as input and a dictionary such as
 # the ones created by prepareData(), this function looks for
@@ -149,6 +150,9 @@ def printUsage():
     print('                              2 symbolic tokens "YOUR" and "TURN" to the symbol "YOUR_TURN"')
     print()
 
+
+# Let's silence the debug logs from vosk
+SetLogLevel(-1)
 
 args = sys.argv[1:]
 
