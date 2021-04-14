@@ -1,13 +1,9 @@
-import * as child from 'child_process';
-import readline from 'readline';
-import { exit } from 'process';
-import { readFileSync } from 'fs';
 import { GameEvent, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
     DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand,
     voiceCommands, Difficulty, State, ValuelessGameState, MessageId, FinneganConfig, messageIDs, SWITCH_LANGUAGE_COMMAND_PREFIX
-} from './types';
-import http from 'http';
-import { Readable } from 'node:stream';
+} from './types.ts';
+import { serve } from 'std/http/server.ts';
+import { readLines } from 'std/io/bufio.ts';
 
 
 function getBlankState(language: string): ValuelessGameState {
@@ -22,14 +18,14 @@ function getBlankState(language: string): ValuelessGameState {
 
 let game: GameState = getBlankState('');
 
-let device: string | undefined;
-let samplerate: string | undefined;
+let device: string|undefined;
+let samplerate: string|undefined;
 let port: number | undefined;
 let lastNumberOfPlayers = 2;
 let lastDifficulty: Difficulty = 'easy';
 let config: FinneganConfig;
 let voiceCommand2Text: Partial<Record<VoiceCommand, string>> = {};
-let fartProcess: child.ChildProcessByStdio<null, Readable, null> | undefined;
+let fartProcess: Deno.Process | undefined;
 
 let playerScoreFromLastTurn = 501;
 let playerNeedADoubleToStartFromLastTurn = false;
@@ -40,12 +36,12 @@ function populateAlternativeLanguageMap() {
         if (pattern.startsWith(SWITCH_LANGUAGE_COMMAND_PREFIX)) {
             if (!config.alternativeLanguageDescriptions) {
                 console.error('Missing property \'alternativeLanguageDescriptions\'');
-                exit(1);
+                Deno.exit(1);
             }
-            const tokenSequence = (config.patterns as any)[pattern];
+            const tokenSequence = config.patterns[pattern];
             if (!tokenSequence) {
                 console.error(`Missing token sequence for \'${pattern}\'`);
-                exit(1);
+                Deno.exit(1);
             }
             const textToSay = `"${tokenSequence2TextToSay(tokenSequence[0])}"`;
             const description = config.alternativeLanguageDescriptions[pattern];
@@ -62,7 +58,7 @@ function tokenSequence2TextToSay(tokenSequence: string): string {
         const alternative = config.tokens[token];
         if (!alternative) {
             console.error(`Missing token ${token} in configuration file !`);
-            exit(1);
+            Deno.exit(1);
         }
         result.push(alternative[0]);
     }
@@ -81,7 +77,7 @@ function populateVoiceCommandMap() {
         const tokenSequence = config.patterns[cmd];
         if (!tokenSequence) {
             console.error(`Missing command ${cmd} in configuration file !`);
-            exit(1);
+            Deno.exit(1);
         }
 
         voiceCommand2Text[cmd] = tokenSequence2TextToSay(tokenSequence[0]);
@@ -92,28 +88,28 @@ function populateVoiceCommandMap() {
 function checkLanguageData(cfg: FinneganConfig) {
     if (!cfg.language) {
         console.error('Missing \'language\' property in config file');
-        exit(1);
+        Deno.exit(1);
     }
 
     if (!cfg.messages) {
         console.error('Missing \'messages\' property in config file');
-        exit(1);
+        Deno.exit(1);
     }
 
     for (const id of messageIDs) {
         if (!cfg.messages[id]) {
             console.error(`Missing message \'${id}\' property in config file`);
-            exit(1);    
+            Deno.exit(1);    
         }
     }
 }
 
 
-function startFart(configFile: string) {
+async function startFart(configFile: string) {
     if (fartProcess) {
-        fartProcess.kill();
+        fartProcess.kill(9);
     }
-    const fartArgs = ['-u', 'fart.py', configFile];
+    const fartArgs = ['python3', '-u', 'fart.py', configFile];
 
     if (device) {
         fartArgs.push('-d', device);
@@ -123,9 +119,13 @@ function startFart(configFile: string) {
         fartArgs.push('-r', samplerate);
     }
 
-    fartProcess = child.spawn('python3', fartArgs, { stdio: ['ignore', 'pipe', 'ignore'] });
-    const stdoutLineReader = readline.createInterface({input: fartProcess.stdout});
-    stdoutLineReader.on('line', (line: string) => {
+    fartProcess = Deno.run({
+        cmd: fartArgs,
+        stdout: "piped",
+        stderr: "null",
+    });
+
+    for await (const line of readLines(fartProcess.stdout!)) {
         if (line.startsWith('???:')) {
             render();
             processUnrecognizedInput(line.substring(4));
@@ -134,13 +134,13 @@ function startFart(configFile: string) {
             updatePossibleThingsToSay();
             render();
         }
-    });
+    }
 }
 
 
 async function startGameEngine(configFile: string) {
-    const rawdata = readFileSync(configFile);
-    config = JSON.parse(rawdata.toString());
+    const rawdata = await Deno.readFile(configFile);
+    config = JSON.parse(new TextDecoder('utf-8').decode(rawdata));
     checkLanguageData(config);
     populateVoiceCommandMap();
     populateAlternativeLanguageMap();
@@ -192,6 +192,7 @@ function getCommandDescription(cmd: PossibleCommand): string {
         case 'CORRECTION': return msg('CORRECTION');
         case 'NEXT_TURN': return msg('NEXT_TURN');
         case '<score>': return msg('SCORE');
+        default: throw 'Illegal cmd value';
     }
 }
 
@@ -499,7 +500,7 @@ function isIgnored(dart: DartPlayed) {
 function quit() {
     console.log('Bye bye...');
     console.log();
-    exit(0);
+    Deno.exit(0);
 }
 
 
@@ -701,7 +702,7 @@ function processEvent(event: GameEvent): boolean {
                 };
                 game.playerStatuses[game.currentPlayer].dartsPlayed[game.turn].push(dart);
 
-                let tentative_score = game.playerStatuses[game.currentPlayer].score;
+                const currentScore = game.playerStatuses[game.currentPlayer].score;
                 if (game.playerStatuses[game.currentPlayer].needADoubleToStart) {
                     if (isDouble(dart)) {
                         // If we need a double start, we are still at 501 so any double
@@ -714,12 +715,12 @@ function processEvent(event: GameEvent): boolean {
                     }
                 }
                 const dartScore = getDartScore(dart);
-                if (dartScore > tentative_score) {
+                if (dartScore > currentScore) {
                     // If the dart would make the score be negative, we have to ignore it
                     dart.status = 'SCORE_CANNOT_BE_NEGATIVE';
                     return true;
                 }
-                if (dartScore === tentative_score - 1) {
+                if (dartScore === currentScore - 1) {
                     if (game.difficulty !== 'easy') {
                         // If we need a double to finish, ending up with 1 is illegal
                         dart.status = 'SCORE_CANNOT_BE_1';
@@ -728,7 +729,7 @@ function processEvent(event: GameEvent): boolean {
                     game.playerStatuses[game.currentPlayer].score = 1;
                     return true;
                 }
-                if (dartScore === tentative_score) {
+                if (dartScore === currentScore) {
                     if (game.difficulty !== 'easy' && !isDouble(dart)) {
                         // If we need a double to finish and haven't got one, we ignore the dart
                         dart.status = 'NEED_A_DOUBLE_TO_END';
@@ -851,18 +852,20 @@ function processEndOfTurn() {
 }
 
 
-function startServer(port: number) {
-    const server = http.createServer((req, res) => {
-        if (req.method === 'GET' && req.url === '/state') {
-            res.setHeader('Content-Type', 'application/json');
-            res.writeHead(200);
-            res.end(JSON.stringify(game, null, 2));
-        } else {
-            res.writeHead(404);
-            res.end();
+async function startServer(port: number) {
+    const server = serve({ hostname: "0.0.0.0", port });
+
+    for await (const request of server) {
+        if (request.method === 'GET' && request.url === '/state') {
+            const headers = new Headers();
+            headers.append('Content-Type', 'application/json');
+            request.respond({
+                status: 200,
+                headers,
+                body: JSON.stringify(game, null, 2)
+            });
         }
-    });
-    server.listen(port);
+    }
 }
 
 function printUsage() {
@@ -895,11 +898,11 @@ function printUsage() {
 }
 
 
-function parseArguments(): string {
-    let args = process.argv.slice(2);
+async function parseArguments(): Promise<string> {
+    const args = Deno.args;
     if (args.length === 0) {
         printUsage();
-        exit(0);
+        Deno.exit(0);
     }
 
     let configFile: string | undefined;
@@ -908,19 +911,22 @@ function parseArguments(): string {
         const arg = args[i++];
 
         if (arg === '--list-devices') {
-            child.spawnSync('python3', ['-u', 'fart.py', '-l'], { stdio: ['ignore', 'inherit', 'inherit'] });
-            exit(0);
+            const p = Deno.run({
+                cmd: ['python3', '-u', 'fart.py', '-l']
+            });
+            await p.status();
+            Deno.exit(0);
         }
 
         if (arg === '--difficulty') {
             if (i === args.length) {
                 console.error(`Missing ${arg} argument`);
-                exit(1);
+                Deno.exit(1);
             }
             const argValue = args[i++];
-                if (argValue !== 'expert' && argValue !== 'medium' && argValue !== 'easy') {
+            if (argValue !== 'expert' && argValue !== 'medium' && argValue !== 'easy') {
                 console.error(`Invalid ${arg} argument: ${argValue}`);
-                exit(1);
+                Deno.exit(1);
             }
             lastDifficulty = argValue;
             continue;
@@ -929,13 +935,13 @@ function parseArguments(): string {
         if (arg === '--players') {
             if (i === args.length) {
                 console.error(`Missing ${arg} argument`);
-                exit(1);
+                Deno.exit(1);
             }
             const argValue = args[i++];
                 lastNumberOfPlayers = parseInt(argValue);
             if (isNaN(lastNumberOfPlayers) || lastNumberOfPlayers < 1 || lastNumberOfPlayers > 10) {
                 console.error(`Invalid ${arg} argument: ${argValue}`);
-                exit(1);
+                Deno.exit(1);
             }
             continue;
         }
@@ -943,13 +949,13 @@ function parseArguments(): string {
         if (arg === '--port') {
             if (i === args.length) {
                 console.error(`Missing ${arg} argument`);
-                exit(1);
+                Deno.exit(1);
             }
             const argValue = args[i++];
                 port = parseInt(argValue);
             if (isNaN(port) || port < 1024 || port > 65635) {
                 console.error(`Invalid ${arg} argument: ${argValue}`);
-                exit(1);
+                Deno.exit(1);
             }
             continue;
         }
@@ -957,7 +963,7 @@ function parseArguments(): string {
         if (arg === '--device') {
             if (i === args.length) {
                 console.error(`Missing ${arg} argument`);
-                exit(1);
+                Deno.exit(1);
             }
             device = args[i++];
             continue;
@@ -966,7 +972,7 @@ function parseArguments(): string {
         if (arg === '--samplerate') {
             if (i === args.length) {
                 console.error(`Missing ${arg} argument`);
-                exit(1);
+                Deno.exit(1);
             }
             device = args[i++];
             continue;
@@ -981,17 +987,17 @@ function parseArguments(): string {
 
     if (configFile === undefined) {
         console.error('Missing configuration file');
-        exit(1);
+        Deno.exit(1);
     }
 
     return configFile;
 }
 
 
-const configFile = parseArguments();
+const configFile = await parseArguments();
 
 if (port !== undefined) {
     startServer(port);
 }
 
-startGameEngine(configFile);
+await startGameEngine(configFile);

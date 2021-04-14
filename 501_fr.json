@@ -50,7 +50,7 @@
                    "beignet", "beignets"],
         "ANGLAIS": ["anglais"],
         "NOUVELLE": ["nouvelle", "nouvel", "nouvelles"],
-        "PARTIE": ["partie", "parti", "partis", "parties", "partit", "par-ci"],
+        "PARTIE": ["partie", "parti", "partis", "parties", "partit", "par-ci", "partir"],
         "PAUSE": ["pause", "pose", "posent", "poses", "pauses"],
         "REPRENDRE": ["reprendre"],
         "COMMENCE": ["commence", "commencent"],

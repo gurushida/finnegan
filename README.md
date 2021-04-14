@@ -86,13 +86,15 @@ Dart 3: D10
 
 
 ## Dependencies
-To run this application, you need `python3` >= 3.6, `pip3` >= 10, `npm` and `node`.
+To run this application, you need `python3` >= 3.6, `pip3` >= 10, and [deno](https://deno.land/#installation) >= 1.9.
 On MacOS, you need to make sure the Terminal is allowed to access your microphone. 
 
 
 ## How to run it
-Run `npm install` to install all the dependencies, then run `npm build` to build the application.
-Run `./finnegan 501_en.json` to start playing in English.
+Run `./install_dependencies.sh ` to install the dependencies, i.e. the python modules and data models needed
+to run the speech recognition tool.
+
+Then run `./finnegan 501_en.json` to start playing in English.
 
 
 ## How does it work ?

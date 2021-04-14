@@ -351,7 +351,7 @@ export interface FartConfig {
 
     // Associates to each symbolic command to recognize the list of token symbols
     // that will be accepted
-    patterns: Record<VoiceCommand, string[]>;
+    patterns: Record<string, string[]>;
 }
 
 export interface FinneganConfig extends FartConfig {
