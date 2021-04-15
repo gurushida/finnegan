@@ -153,8 +153,8 @@ function updatePlayerNames() {
 
 
 async function startGameEngine(configFile: string) {
-    const rawdata = await Deno.readFile(configFile);
-    config = JSON.parse(new TextDecoder('utf-8').decode(rawdata));
+    const json = await Deno.readTextFile(configFile);
+    config = JSON.parse(json);
     checkLanguageData(config);
     populateVoiceCommandMap();
     populateAlternativeLanguageMap();
@@ -876,6 +876,30 @@ async function startServer(port: number) {
                 status: 200,
                 headers,
                 body: JSON.stringify(game, null, 2)
+            });
+        } else if (request.method === 'GET' &&
+            (request.url === '' || request.url === '/' || request.url === '/finnegan.html')) {
+            const html = await Deno.readTextFile('finnegan.html');
+            const headers = new Headers();
+            headers.append('Content-Type', 'text/html');
+            request.respond({
+                status: 200,
+                headers,
+                body: html
+            });
+        } else if (request.method === 'GET' && request.url === '/dartboard.svg') {
+            const svg = await Deno.readTextFile('dartboard.svg');
+            const headers = new Headers();
+            headers.append('Content-Type', 'image/svg+xml');
+            request.respond({
+                status: 200,
+                headers,
+                body: svg
+            });
+        } else {
+            request.respond({
+                status: 404,
+                body: ''
             });
         }
     }
