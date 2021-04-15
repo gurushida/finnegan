@@ -61,8 +61,8 @@
     }
 
     .message {
-      font-family: 'Roboto Mono', monospace;
-      font-size: 16px;
+      font-family: 'Oxanium', cursive;
+      font-size: 30px;
       padding: 10px;
       background-color: #0777d3;
       color: white;
@@ -113,6 +113,7 @@
       const root = document.getElementById('messageRoot');
       let html = '';
       if (state.messageForUser) {
+        html += `<br/>`;
         html += `<div class="message">`;
         html += `${escapeHtml(state.messageForUser)}`;
         html += `</div>`;
@@ -154,6 +155,7 @@
       const N_TURNS = state.turn;
 
       let html = '';
+      html += `<br/>`;
       html += `<table id="scores" class="score">`;
       html += `<tr style="color:white;">`;
       html += `<td></td>`;
@@ -254,8 +256,8 @@
     </tr>
   </table>
 
-  <div id='messageRoot'></div>
   <div id='scoreBoardRoot'></div>
+  <div id='messageRoot'></div>
   <div style="position: absolute; bottom: 0; left: 0; width: 100%">
     <div id='textToSayRoot'></div>
     <div id='unrecognizedTextRoot'></div>
