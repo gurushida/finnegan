@@ -9,9 +9,9 @@ import { readLines } from 'std/io/bufio.ts';
 function getBlankState(language: string): ValuelessGameState {
     return {
         language,
-        alternativeLanguages: {},
         state: 'NOT_PLAYING',
         possibleThingsToSay: [],
+        alternativeLanguages: [],
     };
 }
 
@@ -31,7 +31,7 @@ let playerScoreFromLastTurn = 501;
 let playerNeedADoubleToStartFromLastTurn = false;
 
 function populateAlternativeLanguageMap() {
-    game.alternativeLanguages = {};
+    game.alternativeLanguages = [];
     for (const pattern in config.patterns) {
         if (pattern.startsWith(SWITCH_LANGUAGE_COMMAND_PREFIX)) {
             if (!config.alternativeLanguageDescriptions) {
@@ -45,7 +45,11 @@ function populateAlternativeLanguageMap() {
             }
             const textToSay = `"${tokenSequence2TextToSay(tokenSequence[0])}"`;
             const description = config.alternativeLanguageDescriptions[pattern];
-            game.alternativeLanguages[textToSay] = description;
+            game.alternativeLanguages.push({
+                command: pattern,
+                textToSay,
+                description,
+            });
         }
     }
 }
@@ -127,13 +131,16 @@ async function startFart(configFile: string) {
 
     for await (const line of readLines(fartProcess.stdout!)) {
         if (line.startsWith('???:')) {
-            render();
-            processUnrecognizedInput(line.substring(4));
+            game.unrecognizedText = {
+                text: line.substring(4),
+                iDidntUnderstandLabel: msg('I_DIDNT_UNDERSTAND'),
+            };
         } else if (line.startsWith('CMD:')) {
+            game.unrecognizedText = undefined;
             processCommand(line.substring(4));
             updatePossibleThingsToSay();
-            render();
         }
+        render();
     }
 }
 
@@ -162,6 +169,10 @@ async function startGameEngine(configFile: string) {
     startFart(configFile);
     updatePossibleThingsToSay();
     updatePlayerNames();
+
+    // When switching language, there is no point in showing the last
+    // thing not understood in the previous language
+    game.unrecognizedText = undefined;
     render();
 }
 
@@ -220,8 +231,8 @@ function printPossibleCommands() {
         commandLines.push(`${command.textToSay.padEnd(maxLen)}     ${command.description}`);
     }
     commandLines.push('');
-    for (const altLang in game.alternativeLanguages) {
-        commandLines.push(`${altLang.padEnd(maxLen)}     ${game.alternativeLanguages[altLang]}`);
+    for (const altLang of game.alternativeLanguages) {
+        commandLines.push(`${altLang.textToSay.padEnd(maxLen)}     ${altLang.description}`);
     }
 
     const maxLineLen = Math.max(...(commandLines.map(line => line.length)));
@@ -292,6 +303,11 @@ function render() {
     }
 
     printPossibleCommands();
+
+    if (game.unrecognizedText) {
+        console.log();
+        console.log(`${game.unrecognizedText.iDidntUnderstandLabel}: "${game.unrecognizedText.text}"`);
+    }
 }
 
 
@@ -339,12 +355,6 @@ function printScoreBoard(g: PlayingState) {
     }
 
     console.log();
-}
-
-
-function processUnrecognizedInput(text: string) {
-    console.log();
-    console.log(`${msg('I_DIDNT_UNDERSTAND')}: "${text}"`);
 }
 
 

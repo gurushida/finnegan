@@ -1,0 +1,221 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="dartboard.svg">
+  <title>Finnegan</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Roboto+Mono&family=Oxanium:wght@500&display=swap"
+    rel="stylesheet">
+  <style>
+    body {
+      background-color: black;
+    }
+
+    td.title {
+      font-family: 'Pinyon Script', cursive;
+      font-size: 100px;
+      color: rgb(59, 134, 8);
+    }
+
+    table.speech {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 16px;
+      color: rgb(228, 169, 9);
+    }
+
+    td.lang {
+      color: rgb(90 128 239);
+    }
+
+    td.title {
+      vertical-align: middle;
+    }
+
+    table.score {
+      font-family: 'Oxanium', cursive;
+      font-size: 20px;
+      color: rgb(224, 17, 69);
+
+    }
+
+    td.ignored {
+      color: rgb(146, 138, 140);
+    }
+
+    td.score {
+      font-size: 40px;
+      color: rgb(245, 229, 10);
+    }
+
+    td.currentPlayer {
+      font-size: 25px;
+      color: rgb(23 255 223);
+      white-space: nowrap;
+    }
+
+    td.player {
+      font-size: 25px;
+      color: rgb(147, 89, 201);
+      white-space: nowrap;
+    }
+
+    .alert {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 16px;
+      padding: 10px;
+      background-color: #f44336;
+      color: white;
+    }
+
+  </style>
+
+  <script>
+
+    function render(state) {
+      console.log(JSON.stringify(state, null, 2));
+      renderScores(state);
+      renderTextToSay(state);
+      renderUnrecognizedText(state);
+    }
+
+    function escapeHtml(unsafe) {
+      return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+    }
+
+    function renderUnrecognizedText(state) {
+      const root = document.getElementById('unrecognizedTextRoot');
+      let html = '';
+      if (state.unrecognizedText) {
+        html += `<div class="alert">`;
+        html += `${escapeHtml(state.unrecognizedText.iDidntUnderstandLabel)}: "${escapeHtml(state.unrecognizedText.text)}"`;
+        html += `</div>`;
+      }
+      root.innerHTML = html;
+    }
+
+
+    function renderTextToSay(state) {
+      const textRoot = document.getElementById('textToSayRoot');
+      let html = '';
+      html += `<table class="speech">`;
+      for (const command of state.possibleThingsToSay ?? []) {
+        html += `<tr>`;
+        html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
+        html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
+        html += `</tr>`;
+      }
+
+      for (const language of state.alternativeLanguages ?? []) {
+        html += `<tr>`;
+        html += `<td class="lang">${escapeHtml(language.textToSay)}&nbsp;&nbsp;</td>`;
+        html += `<td class="lang">${escapeHtml(language.description)}</td>`;
+        html += `</tr>`;
+      }
+
+      html += `</table>`;
+      textRoot.innerHTML = html;
+    }
+
+
+    function renderScores(state) {
+      if (!state.playerStatuses || state.playerStatuses.length === 0) {
+        return;
+      }
+      const scoreBoardRoot = document.getElementById('scoreBoardRoot');
+
+      const N_PLAYERS = state.playerStatuses.length;
+      const N_TURNS = state.turn;
+
+      let html = '';
+      html += `<table id="scores" class="score">`;
+      html += `<tr style="color:white;">`;
+      html += `<td></td>`;
+      html += `<td></td>`;
+      for (let turn = 0; turn <= N_TURNS; turn++) {
+        html += `<td id="turn${turn + 1}" colspan="3">${turn + 1}</td>`;
+      }
+      html += `</tr>`;
+
+      for (let p = 0; p < N_PLAYERS; p++) {
+        const status = state.playerStatuses[p];
+        html += `<tr>`;
+        if (p === state.currentPlayer) {
+          html += `<td class="currentPlayer">&#9656;${state.playerStatuses[p].description}&nbsp;&nbsp;</td>`;
+        } else {
+          html += `<td class="player">&nbsp;&nbsp;${state.playerStatuses[p].description}&nbsp;&nbsp;</td>`;
+        }
+        html += `<td class="score">${status.score}&nbsp;&nbsp;</td>`;
+        for (let turn = 0; turn <= N_TURNS; turn++) {
+          for (let dart = 0; dart < 3; dart++) {
+            const darts = status.dartsPlayed[turn] ?? [];
+            let dartDescription = '';
+            let ignored = true;
+            if (dart < darts.length) {
+              const baseValue = darts[dart].baseValue;
+              const multiplier = darts[dart].multiplier;
+              if (baseValue === 0) {
+                dartDescription = '-';
+              } else {
+                ignored = darts[dart].status !== 'OK';
+                if (multiplier === 2) {
+                  dartDescription += `D`;
+                } else if (multiplier === 3) {
+                  dartDescription += `T`;
+                }
+                dartDescription += `${baseValue}`;
+              }
+            }
+            if (dart === 2) {
+              dartDescription += '&nbsp;&nbsp;';
+            }
+            if (ignored) {
+              html += `<td class="ignored" id="p${p}turn${turn}dart${dart}">${dartDescription}</td>`;
+            } else {
+              html += `<td id="p${p}turn${turn}dart${dart}">${dartDescription}</td>`;
+            }
+          }
+        }
+        html += `</tr>`;
+      }
+      html += `</table>`;
+      scoreBoardRoot.innerHTML = html;
+    }
+
+    function pollGameState() {
+      fetch('/state')
+        .then(res => res.json())
+        .then((gameState) => {
+          render(gameState);
+        }).catch(err => { throw err });
+    }
+
+    pollGameState();
+    // Let's poll for updates every second
+    setInterval(() => pollGameState(), 1000);
+  </script>
+</head>
+
+<body>
+  <table style="table-layout: fixed; width:100%">
+    <tr>
+      <td valign="middle" style="text-align: right;"><img src="dartboard.svg" width='100px'></td>
+      <td class="title" valign="middle" style="text-align: center;">&nbsp;Finnegan&nbsp;</td>
+      <td valign="middle"><img src="dartboard.svg" width='100px'></td>
+    </tr>
+  </table>
+
+  <div id='scoreBoardRoot'></div>
+  <div style="position: absolute; bottom: 0; left: 0; width: 100%">
+    <div id='textToSayRoot'></div>
+    <div id='unrecognizedTextRoot'></div>
+  </div>
+
+</body>
+</html>

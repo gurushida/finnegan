@@ -274,7 +274,7 @@ export function isVoiceCommand(s: string): s is VoiceCommand {
  */
 export interface PossibleThingToSay {
     // The command symbol
-    command: PossibleCommand;
+    command: string;
 
     // The text to actually say to trigger it like "start game"
     // or <score> if the command can be triggered by any score
@@ -299,6 +299,11 @@ export type State = 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
  | 'PLAYING' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION__PLAYING' | 'GAME_WON'
  | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
 
+export interface UnrecognizedTtext {
+    text: string;
+    iDidntUnderstandLabel: string;
+}
+
 export interface BaseGameState {
     language: string;
     state: State;
@@ -308,7 +313,11 @@ export interface BaseGameState {
 
     // The possible commands
     possibleThingsToSay: PossibleThingToSay[];
-    alternativeLanguages: Record<string, string>;
+    alternativeLanguages: PossibleThingToSay[];
+
+    // The last piece of text recognized by the speech recognition
+    // tool but not understood as a command by the game engine
+    unrecognizedText?: UnrecognizedTtext;
 }
 
 export interface ValuelessGameState extends BaseGameState {

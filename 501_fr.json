@@ -85,7 +85,7 @@
         "DIX_SEPT": ["dix-sept", "dix sept"],
         "DIX_HUIT": ["dix-huit", "dix huit"],
         "DIX_NEUF": ["dix-neuf", "dix neuf"],
-        "VINGT": ["vingt", "vin", "vins", "vaint", "vaints", "vint", "xx", "en vain"],
+        "VINGT": ["vingt", "vin", "vins", "vaint", "vaints", "vint", "xx", "en vain", "van"],
         "VINGT_CINQ": ["vingt-cinq", "vingt cinq"],
         "DOUBLE": ["double", "doubles"],
         "TRIPLE": ["triple", "triples"],
