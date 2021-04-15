@@ -138,6 +138,20 @@ async function startFart(configFile: string) {
 }
 
 
+function updatePlayerNames() {
+    if (game.state === 'PLAYING'
+      || game.state === 'GAME_PAUSED'
+      || game.state === 'WAITING_QUIT_CONFIRMATION__PLAYING'
+      || game.state === 'GAME_WON'
+      || game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON'
+      || game.state === 'WAITING_STOP_GAME_CONFIRMATION') {
+        for (let i = 0 ; i < game.playerStatuses.length ; i++) {
+            game.playerStatuses[i].description = `${msg('PLAYER')} ${i + 1}`;
+        }
+    }
+}
+
+
 async function startGameEngine(configFile: string) {
     const rawdata = await Deno.readFile(configFile);
     config = JSON.parse(new TextDecoder('utf-8').decode(rawdata));
@@ -147,6 +161,7 @@ async function startGameEngine(configFile: string) {
 
     startFart(configFile);
     updatePossibleThingsToSay();
+    updatePlayerNames();
     render();
 }
 
@@ -304,13 +319,13 @@ function printScoreBoard(g: PlayingState) {
 
     for (let i = 0 ; i < g.playerStatuses.length ; i++) {
         const cur = i === g.currentPlayer;
-        console.log(`${cur ? ' => ' : '    '}${msg('PLAYER')} ${i + 1}: ${g.playerStatuses[i].score}`);
+        console.log(`${cur ? ' => ' : '    '}${g.playerStatuses[i].description}: ${g.playerStatuses[i].score}`);
     }
 
     console.log();
     if (g.state === 'PLAYING') {
         if (g.playerStatuses[g.currentPlayer].needADoubleToStart) {
-            console.log(`${msg('PLAYER')} ${g.currentPlayer + 1} ${msg('NEEDS_A_DOUBLE_TO_START')}`);
+            console.log(`${g.playerStatuses[g.currentPlayer].description} ${msg('NEEDS_A_DOUBLE_TO_START')}`);
         }
         const dartsPlayedThisTurn = g.playerStatuses[g.currentPlayer].dartsPlayed[g.turn];
         for (let i = 0 ; i < dartsPlayedThisTurn.length ; i++) {
@@ -456,6 +471,7 @@ function startGame() {
 
     for (let i = 1 ; i <= lastNumberOfPlayers ; i++) {
         playerStatuses.push({
+            description: `${msg('PLAYER')} ${i}`,
             score: 501,
             needADoubleToStart: lastDifficulty === 'expert',
             dartsPlayed: []

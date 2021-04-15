@@ -226,6 +226,7 @@ export type GameEvent = DifficultyEvent | PlayerCountEvent | AnswerEvent | Score
 
 
 export interface PlayerStatus {
+    description: string;
     score: number;
     needADoubleToStart: boolean;
 
