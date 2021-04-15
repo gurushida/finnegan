@@ -37,7 +37,6 @@
       font-family: 'Oxanium', cursive;
       font-size: 20px;
       color: rgb(224, 17, 69);
-
     }
 
     td.ignored {
@@ -61,6 +60,14 @@
       white-space: nowrap;
     }
 
+    .message {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 16px;
+      padding: 10px;
+      background-color: #0777d3;
+      color: white;
+    }
+
     .alert {
       font-family: 'Roboto Mono', monospace;
       font-size: 16px;
@@ -77,6 +84,7 @@
       renderScores(state);
       renderTextToSay(state);
       renderUnrecognizedText(state);
+      renderMessage(state);
     }
 
     function escapeHtml(unsafe) {
@@ -88,12 +96,25 @@
          .replace(/'/g, "&#039;");
     }
 
+
     function renderUnrecognizedText(state) {
       const root = document.getElementById('unrecognizedTextRoot');
       let html = '';
       if (state.unrecognizedText) {
         html += `<div class="alert">`;
         html += `${escapeHtml(state.unrecognizedText.iDidntUnderstandLabel)}: "${escapeHtml(state.unrecognizedText.text)}"`;
+        html += `</div>`;
+      }
+      root.innerHTML = html;
+    }
+
+
+    function renderMessage(state) {
+      const root = document.getElementById('messageRoot');
+      let html = '';
+      if (state.messageForUser) {
+        html += `<div class="message">`;
+        html += `${escapeHtml(state.messageForUser)}`;
         html += `</div>`;
       }
       root.innerHTML = html;
@@ -233,6 +254,7 @@
     </tr>
   </table>
 
+  <div id='messageRoot'></div>
   <div id='scoreBoardRoot'></div>
   <div style="position: absolute; bottom: 0; left: 0; width: 100%">
     <div id='textToSayRoot'></div>
