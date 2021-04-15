@@ -241,12 +241,9 @@ function msgDifficulty(d: Difficulty) {
 
 
 function render() {
-    // Clear screen
-    console.log('\u001b[2J');
-    // Move to line 0, column 0
-    console.log('\u001b[0;0H');
-
-    console.log('/-------------------------------------------------------\\');
+    // The terminal escape code sequence "\u001b[2J\u001b[0;0H\u001b[3J" is
+    // for clearing the screen at placing the corner in the top left corner
+    console.log('\u001b[2J\u001b[0;0H\u001b[3J/-------------------------------------------------------\\');
     console.log('|  FINNEGAN - 501 DART VOICE CONTROLLED SCORING SYSTEM  |');
     console.log('\\-------------------------------------------------------/');
     console.log();
