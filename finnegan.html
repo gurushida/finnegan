@@ -74,7 +74,6 @@
   <script>
 
     function render(state) {
-      console.log(JSON.stringify(state, null, 2));
       renderScores(state);
       renderTextToSay(state);
       renderUnrecognizedText(state);
@@ -139,7 +138,7 @@
       html += `<td></td>`;
       html += `<td></td>`;
       for (let turn = 0; turn <= N_TURNS; turn++) {
-        html += `<td id="turn${turn + 1}" colspan="3">${turn + 1}</td>`;
+        html += `<td id="turn${turn}" colspan="3">${turn + 1}</td>`;
       }
       html += `</tr>`;
 
@@ -186,6 +185,29 @@
       }
       html += `</table>`;
       scoreBoardRoot.innerHTML = html;
+
+      // In case there is not enough room to display all turns,
+      // let's hide the oldest
+
+      adjustScoreTable(state);
+    }
+
+    function hideTurn(n, state) {
+      document.getElementById(`turn${n}`).style.display="none";
+      for (let p = 0 ; p < state.playerStatuses.length ; p++) {
+        document.getElementById(`p${p}turn${n}dart0`).style.display="none";
+        document.getElementById(`p${p}turn${n}dart1`).style.display="none";
+        document.getElementById(`p${p}turn${n}dart2`).style.display="none";
+      }
+    }
+
+    function adjustScoreTable(state) {
+      const scoreTable = document.getElementById('scores');
+      let n = 0
+      while (n < state.turn && scoreTable.clientWidth > window.innerWidth) {
+        hideTurn(n, state);
+        n++;
+      }
     }
 
     function pollGameState() {
