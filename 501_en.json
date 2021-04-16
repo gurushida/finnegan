@@ -48,12 +48,14 @@
     "tokens": {
         "GUINNESS": ["guinness", "get us", "give us", "eunice", "dennis", "nice", "ness", "jonas", "he next", "the next", "can us",
                      "good us", "i guess", "can ask", "you next", "u s next", "dns", "guess"],
+        "FINNEGAN": ["finnegan"],
         "FRENCH": ["french"],
         "NEW": ["new", "near", "you", "your"],
-        "GAME": ["game"],
-        "PAUSE": ["pause", "pose", "post", "posts", "polls", "both", "foes"],
+        "GAME": ["game", "games"],
+        "PAUSE": ["pause", "pose", "post", "posts", "polls", "both", "foes", "paul's", "poe's"],
         "CONTINUE": ["continue"],
         "BEGIN": ["begin"],
+        "START": ["start", "starts", "star"],
         "STOP": ["stop", "stopped", "stump"],
         "QUIT": ["quit", "quits"],
         "NEXT": ["next"],
@@ -88,20 +90,24 @@
         "NINETEEN": ["nineteen", "ninety"],
         "TWENTY": ["twenty"],
         "DOUBLE": ["double", "doubled", "dabbled", "babel", "the ball", "the bowl", "that will", "they will", "the old",
-                   "the whole", "devil", "dublin", "the will", "douglas"],
+                   "the whole", "devil", "dublin", "the will", "douglas", "the bill"],
         "TRIPLE": ["triple", "people", "drupal", "treble", "dribble", "tripled", "crippled", "cripple"],
         "BULLSEYE": ["bullseye", "bull's eye", "bowles eye"],
-        "FIFTY": ["fifty", "shifty"]
+        "FIFTY": ["fifty", "shifty"],
+        "LANGUAGE": ["language", "languages"],
+
+        "NOISE_TO_IGNORE": ["potato", "huh", "ah"]
     },
     "patterns": {
-        "NEW_GAME": ["GUINNESS NEW GAME", "YES NEW GAME"],
-        "STOP_GAME": ["GUINNESS STOP GAME"],
-        "PAUSE_GAME": ["GUINNESS PAUSE GAME"],
-        "CONTINUE_GAME": ["GUINNESS CONTINUE GAME"],
-        "QUIT": ["GUINNESS QUIT"],
-        "CORRECTION": ["GUINNESS CORRECTION"],
-        "START_GAME": ["GUINNESS BEGIN"],
-        "NEXT_TURN": ["GUINNESS NEXT"],
+        "NOISE_TO_IGNORE": ["NOISE_TO_IGNORE"],
+        "NEW_GAME": ["NEW GAME"],
+        "STOP_GAME": ["STOP GAME"],
+        "PAUSE_GAME": ["PAUSE GAME"],
+        "CONTINUE_GAME": ["CONTINUE GAME"],
+        "QUIT": ["QUIT FINNEGAN"],
+        "CORRECTION": ["CORRECTION"],
+        "START_GAME": ["START GAME"],
+        "NEXT_TURN": ["NEXT PLAYER", "NEXT PLAYERS"],
         "SET_DIFFICULTY_EXPERT": ["EXPERT"],
         "SET_DIFFICULTY_MEDIUM": ["MEDIUM"],
         "SET_DIFFICULTY_EASY": ["EASY"],
@@ -180,6 +186,6 @@
         "SCORE_3x20": ["TRIPLE TWENTY"],
         "SCORE_1x25": ["TWENTY FIVE"],
         "SCORE_2x25": ["FIFTY", "BULLSEYE", "DOUBLE TWENTY FIVE"],
-        "LOAD_CONFIG:501_fr.json": ["GUINNESS FRENCH"]
+        "LOAD_CONFIG:501_fr.json": ["LANGUAGE FRENCH"]
     }
 }
