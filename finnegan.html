@@ -23,9 +23,18 @@
       font-family: 'Roboto Mono', monospace;
       font-size: 16px;
       color: rgb(228, 169, 9);
+      cursor: pointer;
     }
 
-    .speech tr:hover {
+    tr.nonscorespeech:hover {
+      color:rgb(224, 17, 69);
+    }
+
+    tr.scorespeech {
+      cursor: default;
+    }
+
+    tr.lang:hover {
       color:rgb(224, 17, 69);
     }
 
@@ -46,12 +55,24 @@
     table.scoreButtons {
       font-family: 'Oxanium', cursive;
       font-size: 20px;
-      background-color: rgb(16, 85, 31);
       color: white;
+      cursor: pointer;
     }
 
-    .scoreButtons td:hover {
+    td.good {
+      background-color: rgb(28, 121, 48);
+    }
+
+    td.bad {
+      background-color: rgb(90, 88, 88);
+    }
+
+    td.good:hover {
       background-color: rgb(90, 214, 117);
+    }
+
+    td.bad:hover {
+      background-color: rgb(155, 156, 155);
     }
 
     td.ignored {
@@ -146,23 +167,31 @@
       return false;
     }
 
+
+    function getPointClass(needDoubleToFinish, playerStatus, multiplier, baseValue) {
+      const good = isGoodMove(needDoubleToFinish, playerStatus, multiplier, baseValue);
+      return good ? ' class="good"' : ' class="bad"';
+    }
+
     function renderTextToSay(state) {
       const textRoot = document.getElementById('textToSayRoot');
       let html = '';
       if (acceptScoreCommands(state)) {
+        const needDoubleToFinish = state.difficulty !== 'easy';
+        const playerStatus = state.playerStatuses[state.currentPlayer];
         html += `<table class='scorebuttons'>`;
           for (let row = 1 ; row <= 3 ; row++) {
             html += `<tr>`;
             if (row === 1) {
-              html += `<td onclick="postCommand('SCORE_0x0')">0</td>`;
+              html += `<td ${getPointClass(needDoubleToFinish, playerStatus, 0, 0)} onclick="postCommand('SCORE_0x0')">0</td>`;
             } else if (row === 2) {
-              html += `<td onclick="postCommand('SCORE_1x25')">25</td>`;
+              html += `<td ${getPointClass(needDoubleToFinish, playerStatus, 1, 25)} onclick="postCommand('SCORE_1x25')">25</td>`;
             } else {
-              html += `<td onclick="postCommand('SCORE_2x25')">50</td>`;
+              html += `<td ${getPointClass(needDoubleToFinish, playerStatus, 2, 25)} onclick="postCommand('SCORE_2x25')">50</td>`;
             }
 
             for (let dart = 1 ; dart <= 20 ; dart++) {
-              html += `<td onclick="postCommand('SCORE_${row}x${dart}')">`;
+              html += `<td ${getPointClass(needDoubleToFinish, playerStatus, row, dart)} onclick="postCommand('SCORE_${row}x${dart}')">`;
               if (row === 2) {
                 html += 'D';
               } else if (row === 3) {
@@ -178,12 +207,12 @@
       html += `<table class="speech">`;
       for (const command of state.possibleThingsToSay ?? []) {
         if (command.textToSay !== '<score>') {
-          html += `<tr onclick="postCommand('${command.command}')">`;
+          html += `<tr class="nonscorespeech" onclick="postCommand('${command.command}')">`;
           html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
           html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
           html += `</tr>`;
         } else {
-          html += `<tr>`;
+          html += `<tr class="scorespeech">`;
           html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
           html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
           html += `</tr>`;
@@ -202,11 +231,35 @@
     }
 
 
+    function isGoodMove(needDoubleToFinish, playerStatus, multiplier, baseValue) {
+      if (baseValue === 0) {
+        return false;
+      }
+      if (playerStatus.needADoubleToStart && multiplier !== 2) {
+        return false;
+      }
+      if (baseValue * multiplier > playerStatus.score) {
+        return false;
+      }
+      if (baseValue * multiplier === playerStatus.score) {
+        if (needDoubleToFinish) {
+          return multiplier === 2;
+        }
+        return true;
+      }
+      if ((baseValue * multiplier === playerStatus.score - 1) && needDoubleToFinish) {
+        return false;
+      }
+      return true;
+    }
+
+
     function renderScores(state) {
+      const scoreBoardRoot = document.getElementById('scoreBoardRoot');
       if (!state.playerStatuses || state.playerStatuses.length === 0) {
+        scoreBoardRoot.innerHTML = '';
         return;
       }
-      const scoreBoardRoot = document.getElementById('scoreBoardRoot');
 
       const N_PLAYERS = state.playerStatuses.length;
       const N_TURNS = state.turn;
@@ -306,6 +359,11 @@
       xhr.open('POST', '/command', true);
       xhr.setRequestHeader("Content-Type", "application/json");
       const data = JSON.stringify({"command": command});
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          pollGameState();
+        }
+      };
       xhr.send(data);
     }
 
