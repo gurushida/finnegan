@@ -60,10 +60,12 @@
     }
 
     td.good {
+      text-align: right;
       background-color: rgb(28, 121, 48);
     }
 
     td.bad {
+      text-align: right;
       background-color: rgb(90, 88, 88);
     }
 
@@ -75,8 +77,13 @@
       background-color: rgb(155, 156, 155);
     }
 
+    td.scorecell {
+      width: 20px;
+    }
+
     td.ignored {
       color: rgb(146, 138, 140);
+      width: 20px;
     }
 
     td.score {
@@ -360,7 +367,7 @@
             if (ignored) {
               html += `<td class="ignored" id="p${p}turn${turn}dart${dart}">${dartDescription}</td>`;
             } else {
-              html += `<td id="p${p}turn${turn}dart${dart}">${dartDescription}</td>`;
+              html += `<td class="scorecell" id="p${p}turn${turn}dart${dart}">${dartDescription}</td>`;
             }
           }
         }
