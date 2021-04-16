@@ -122,6 +122,16 @@
       cursor: pointer;
     }
 
+    .selectedActionButton {
+      font-family: 'Oxanium', cursive;
+      font-size: 30px;
+      padding: 10px;
+      background-color: #1f9949;
+      color: white;
+      width: fit-content;
+      cursor: pointer;
+    }
+
     .alert {
       font-family: 'Roboto Mono', monospace;
       font-size: 16px;
@@ -136,6 +146,7 @@
   <script>
 
     function render(state) {
+      renderPreStartConfig(state);
       renderScores(state);
       renderTextToSay(state);
       renderUnrecognizedText(state);
@@ -149,6 +160,49 @@
          .replace(/>/g, "&gt;")
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
+    }
+
+
+    function isSelectedDifficulty(state, command) {
+      if (state.difficulty === 'easy') {
+        return command.command === 'SET_DIFFICULTY_EASY';
+      }
+      if (state.difficulty === 'medium') {
+        return command.command === 'SET_DIFFICULTY_MEDIUM';
+      }
+      if (state.difficulty === 'expert') {
+        return command.command === 'SET_DIFFICULTY_EXPERT';
+      }
+      return false;
+    }
+
+
+    function renderPreStartConfig(state) {
+      const root = document.getElementById('preStartConfigRoot');
+      let html = '';
+      const difficultyCommands = ['SET_DIFFICULTY_EASY', 'SET_DIFFICULTY_MEDIUM', 'SET_DIFFICULTY_EXPERT'];
+      for (const command of difficultyCommands) {
+        if (c = hasCommand(state, command)) {
+          let text = c.textToSay;
+          while (text.startsWith('"')) {
+            text = text.substring(1);
+          }
+          while (text.endsWith('"')) {
+            text = text.substring(0, text.length - 1);
+          }
+          const selected = isSelectedDifficulty(state, c);
+          html += `<button style='width:140px' class='${selected ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${text}</button>`;
+        }
+      }
+
+      html += '<br/>';
+      for (let playerCount = 1 ; playerCount <= 10 ; playerCount++) {
+        if (c = hasCommand(state, `SET_PLAYER_COUNT_${playerCount}`)) {
+          html += `<button style='width:70px' class='${playerCount === state.numberOfPlayers ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${playerCount}</button>`;
+        }
+      }
+
+      root.innerHTML = html;
     }
 
 
@@ -245,7 +299,9 @@
 
       html += `<table class="speech">`;
       for (const command of state.possibleThingsToSay ?? []) {
-        if (commandButtons.includes(command.command)) {
+        if (commandButtons.includes(command.command)
+            || command.command.startsWith('SET_DIFFICULTY_')
+            || command.command.startsWith('SET_PLAYER_COUNT_')) {
           continue;
         }
         if (command.textToSay !== '<score>') {
@@ -436,6 +492,7 @@
     </tr>
   </table>
 
+  <div id='preStartConfigRoot'></div>
   <div id='scoreBoardRoot'></div>
   <div id='messageRoot'></div>
   <div style="position: absolute; bottom: 0; left: 0; width: 100%">

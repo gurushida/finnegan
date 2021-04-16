@@ -420,7 +420,6 @@ function executeCommand(cmd: string) {
             break;
         }
 
-        case 'SCORE_0x0':
         case 'SCORE_1x1':
         case 'SCORE_1x2':
         case 'SCORE_1x3':
@@ -430,7 +429,16 @@ function executeCommand(cmd: string) {
         case 'SCORE_1x7':
         case 'SCORE_1x8':
         case 'SCORE_1x9':
-        case 'SCORE_1x10':
+        // deno-lint-ignore no-fallthrough
+        case 'SCORE_1x10': {
+            if (game.state === 'WAITING_FOR_START' || game.state === 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START') {
+                // If we get a number between 1 and 10 when configuring the game, let's
+                // interpret that as a number of players
+                processEvent({type: 'SET_PLAYER_COUNT', numberOfPlayers: parseInt(cmd.substring('SCORE_1x'.length))});
+                break;
+            }
+            // Otherwise, use the fallthrough to proceed with a score command
+        }
         case 'SCORE_1x11':
         case 'SCORE_1x12':
         case 'SCORE_1x13':
@@ -482,7 +490,8 @@ function executeCommand(cmd: string) {
         case 'SCORE_3x19':
         case 'SCORE_3x20':
         case 'SCORE_1x25':
-        case 'SCORE_2x25': {
+        case 'SCORE_2x25':
+        case 'SCORE_0x0': {
             const multiplierXvalue = cmd.substring('SCORE_'.length);
             const [multiplierStr, valueStr] = multiplierXvalue.split('x');
             const baseValue = parseInt(valueStr) as DartBaseValue;
