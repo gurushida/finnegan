@@ -55,7 +55,7 @@
         "REPRENDRE": ["reprendre"],
         "COMMENCE": ["commence", "commencent"],
         "STOP": ["stop", "staps"],
-        "QUITTER": ["quitter", "quitté", "quittés", "quittée", "quittées"],
+        "QUITTER": ["quitter", "quitté", "quittés", "quittée", "quittées", "quittait"],
         "SUIVANT": ["suivant", "suivants"],
         "CORRECTION": ["correction", "corrections"],
         "OUI": ["oui"],

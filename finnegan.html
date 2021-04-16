@@ -102,14 +102,26 @@
       padding: 10px;
       background-color: #0777d3;
       color: white;
+      cursor: pointer;
+    }
+
+    .actionButton {
+      font-family: 'Oxanium', cursive;
+      font-size: 30px;
+      padding: 10px;
+      background-color: #0c2f18;
+      color: white;
+      width: fit-content;
+      cursor: pointer;
     }
 
     .alert {
       font-family: 'Roboto Mono', monospace;
       font-size: 16px;
       padding: 10px;
-      background-color: #f44336;
+      background-color: #0c2f18;
       color: white;
+      cursor: pointer;
     }
 
   </style>
@@ -136,11 +148,13 @@
     function renderUnrecognizedText(state) {
       const root = document.getElementById('unrecognizedTextRoot');
       let html = '';
+      html += `<div class="alert">`;
       if (state.unrecognizedText) {
-        html += `<div class="alert">`;
         html += `${escapeHtml(state.unrecognizedText.iDidntUnderstandLabel)}: "${escapeHtml(state.unrecognizedText.text)}"`;
-        html += `</div>`;
+      } else {
+        html += '&nbsp;';
       }
+      html += `</div>`;
       root.innerHTML = html;
     }
 
@@ -158,13 +172,23 @@
     }
 
 
-    function acceptScoreCommands(state) {
+    function hasTextToSay(state, textToSay) {
       for (let command of state.possibleThingsToSay ?? []) {
-        if (command.textToSay === '<score>') {
+        if (command.textToSay === textToSay) {
           return true;
         }
       }
       return false;
+    }
+
+
+    function hasCommand(state, cmd) {
+      for (let command of state.possibleThingsToSay ?? []) {
+        if (command.command === cmd) {
+          return command;
+        }
+      }
+      return undefined;
     }
 
 
@@ -173,10 +197,14 @@
       return good ? ' class="good"' : ' class="bad"';
     }
 
+
     function renderTextToSay(state) {
       const textRoot = document.getElementById('textToSayRoot');
       let html = '';
-      if (acceptScoreCommands(state)) {
+      let c;
+      const commandButtons = ['NEW_GAME', 'START_GAME', 'ANSWER_YES', 'ANSWER_NO',
+        'CORRECTION', 'NEXT_TURN', 'PAUSE_GAME', 'CONTINUE_GAME', 'STOP_GAME', 'QUIT'];
+      if (hasTextToSay(state, '<score>')) {
         const needDoubleToFinish = state.difficulty !== 'easy';
         const playerStatus = state.playerStatuses[state.currentPlayer];
         html += `<table class='scorebuttons'>`;
@@ -206,6 +234,9 @@
 
       html += `<table class="speech">`;
       for (const command of state.possibleThingsToSay ?? []) {
+        if (commandButtons.includes(command.command)) {
+          continue;
+        }
         if (command.textToSay !== '<score>') {
           html += `<tr class="nonscorespeech" onclick="postCommand('${command.command}')">`;
           html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
@@ -227,6 +258,18 @@
       }
 
       html += `</table>`;
+      for (const command of commandButtons) {
+        if (c = hasCommand(state, command)) {
+          let text = c.textToSay;
+          while (text.startsWith('"')) {
+            text = text.substring(1);
+          }
+          while (text.endsWith('"')) {
+            text = text.substring(0, text.length - 1);
+          }
+          html += `<button class='actionButton' onclick="postCommand('${command}')">${text}</button>`;
+        }
+      }
       textRoot.innerHTML = html;
     }
 
