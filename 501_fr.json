@@ -92,7 +92,7 @@
         "CINQUANTE": ["cinquante"]
     },
     "patterns": {
-        "NEW_GAME": ["BINIOU NOUVELLE PARTIE"],
+        "NEW_GAME": ["NOUVELLE PARTIE"],
         "STOP_GAME": ["BINIOU STOP"],
         "PAUSE_GAME": ["BINIOU PAUSE"],
         "CONTINUE_GAME": ["BINIOU REPRENDRE"],

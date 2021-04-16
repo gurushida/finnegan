@@ -498,17 +498,21 @@ function startGame() {
     }
     playerStatuses[0].dartsPlayed.push([]);
 
+
+
+
     game = {
         language: config.language,
         state: 'PLAYING',
         turn: 0,
         possibleThingsToSay: [],
-        alternativeLanguages: game.alternativeLanguages,
+        alternativeLanguages: [],
         difficulty: lastDifficulty,
         playerStatuses,
         currentPlayer: 0,
         messageForUser: undefined,
     };
+    populateAlternativeLanguageMap();
 }
 
 
@@ -580,11 +584,12 @@ function waitForStart() {
         language: config.language,
         state: 'WAITING_FOR_START',
         possibleThingsToSay: [],
-        alternativeLanguages: game.alternativeLanguages,
+        alternativeLanguages: [],
         numberOfPlayers: lastNumberOfPlayers,
         difficulty: lastDifficulty,
         messageForUser: undefined,
     };
+    populateAlternativeLanguageMap();
 }
 
 
@@ -790,6 +795,7 @@ function processEvent(event: GameEvent): boolean {
                     quit();
                 } else {
                     game = getBlankState(config.language);
+                    populateAlternativeLanguageMap();
                     return true;
                 }
             }
@@ -836,6 +842,7 @@ function processEvent(event: GameEvent): boolean {
             if (event.type === 'ANSWER') {
                 if (event.answer === Answer.YES) {
                     game = getBlankState(config.language);
+                    populateAlternativeLanguageMap();
                 } else {
                     continuePlaying();
                 }
