@@ -25,7 +25,11 @@
       color: rgb(228, 169, 9);
     }
 
-    td.lang {
+    .speech tr:hover {
+      color:rgb(224, 17, 69);
+    }
+
+    tr.lang {
       color: rgb(90 128 239);
     }
 
@@ -127,16 +131,23 @@
       let html = '';
       html += `<table class="speech">`;
       for (const command of state.possibleThingsToSay ?? []) {
-        html += `<tr>`;
-        html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
-        html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
-        html += `</tr>`;
+        if (command.textToSay !== '<score>') {
+          html += `<tr onclick="postCommand('${command.command}')">`;
+          html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
+          html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
+          html += `</tr>`;
+        } else {
+          html += `<tr>`;
+          html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
+          html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
+          html += `</tr>`;
+        }
       }
 
       for (const language of state.alternativeLanguages ?? []) {
-        html += `<tr>`;
-        html += `<td class="lang">${escapeHtml(language.textToSay)}&nbsp;&nbsp;</td>`;
-        html += `<td class="lang">${escapeHtml(language.description)}</td>`;
+        html += `<tr class='lang' onclick="postCommand('${language.command}')">`;
+        html += `<td>${escapeHtml(language.textToSay)}&nbsp;&nbsp;</td>`;
+        html += `<td>${escapeHtml(language.description)}</td>`;
         html += `</tr>`;
       }
 
@@ -241,6 +252,14 @@
         .then((gameState) => {
           render(gameState);
         }).catch(err => { throw err });
+    }
+
+    function postCommand(command) {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/command', true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      const data = JSON.stringify({"command": command});
+      xhr.send(data);
     }
 
     pollGameState();
