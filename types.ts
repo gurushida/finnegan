@@ -376,3 +376,15 @@ export interface FinneganConfig extends FartConfig {
     // "LOAD_CONFIG:<path to config file>"
     alternativeLanguageDescriptions?: Record<string, string>;
 }
+
+/**
+ * The type of messages that can be sent with to the server.
+ */
+export interface CommandMsg {
+    command: string;
+}
+
+// deno-lint-ignore no-explicit-any
+export function isCommandMsg(obj: any): obj is CommandMsg {
+    return typeof obj === 'object' && typeof obj.command === 'string';
+}

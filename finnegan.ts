@@ -1,9 +1,10 @@
 import { GameEvent, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
     DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand,
-    voiceCommands, Difficulty, State, ValuelessGameState, MessageId, FinneganConfig, messageIDs, SWITCH_LANGUAGE_COMMAND_PREFIX
+    voiceCommands, Difficulty, State, ValuelessGameState, MessageId, FinneganConfig, messageIDs, SWITCH_LANGUAGE_COMMAND_PREFIX, isCommandMsg
 } from './types.ts';
 import { serve } from 'std/http/server.ts';
 import { readLines } from 'std/io/bufio.ts';
+import { readAll } from 'std/io/util.ts';
 
 
 function getBlankState(language: string): ValuelessGameState {
@@ -135,12 +136,10 @@ async function startFart(configFile: string) {
                 text: line.substring(4),
                 iDidntUnderstandLabel: msg('I_DIDNT_UNDERSTAND'),
             };
+            render();
         } else if (line.startsWith('CMD:')) {
-            game.unrecognizedText = undefined;
             processCommand(line.substring(4));
-            updatePossibleThingsToSay();
         }
-        render();
     }
 }
 
@@ -359,6 +358,14 @@ function printScoreBoard(g: PlayingState) {
 
 
 function processCommand(cmd: string) {
+    game.unrecognizedText = undefined;
+    executeCommand(cmd);
+    updatePossibleThingsToSay();
+    render();
+}
+
+
+function executeCommand(cmd: string) {
     if (cmd.startsWith(SWITCH_LANGUAGE_COMMAND_PREFIX)) {
         const configFile = cmd.substring(SWITCH_LANGUAGE_COMMAND_PREFIX.length);
         setTimeout(() => {
@@ -906,6 +913,24 @@ async function startServer(port: number) {
                 headers,
                 body: svg
             });
+        } else if (request.method === 'POST' && request.url === '/command') {
+            try {
+                const bytes = await readAll(request.body);
+                const bodyText = new TextDecoder('utf8').decode(bytes);
+                const obj = JSON.parse(bodyText);
+                if (!isCommandMsg(obj)) {
+                    throw `Invalid body: ${bodyText}`;
+                }
+                request.respond({
+                    status: 200
+                });
+                processCommand(obj.command);
+            } catch (e) {
+                request.respond({
+                    status: 400,
+                    body: `Bad request: ${e}`
+                });
+            }
         } else {
             request.respond({
                 status: 404,
