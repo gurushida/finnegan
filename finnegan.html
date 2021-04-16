@@ -184,6 +184,8 @@
               const multiplier = darts[dart].multiplier;
               if (baseValue === 0) {
                 dartDescription = '-';
+              } else if (baseValue === 25 && multiplier === 2) {
+                dartDescription = '50';
               } else {
                 ignored = darts[dart].status !== 'OK';
                 if (multiplier === 2) {
