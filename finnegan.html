@@ -43,6 +43,17 @@
       color: rgb(224, 17, 69);
     }
 
+    table.scoreButtons {
+      font-family: 'Oxanium', cursive;
+      font-size: 20px;
+      background-color: rgb(16, 85, 31);
+      color: white;
+    }
+
+    .scoreButtons td:hover {
+      background-color: rgb(90, 214, 117);
+    }
+
     td.ignored {
       color: rgb(146, 138, 140);
     }
@@ -126,9 +137,44 @@
     }
 
 
+    function acceptScoreCommands(state) {
+      for (let command of state.possibleThingsToSay ?? []) {
+        if (command.textToSay === '<score>') {
+          return true;
+        }
+      }
+      return false;
+    }
+
     function renderTextToSay(state) {
       const textRoot = document.getElementById('textToSayRoot');
       let html = '';
+      if (acceptScoreCommands(state)) {
+        html += `<table class='scorebuttons'>`;
+          for (let row = 1 ; row <= 3 ; row++) {
+            html += `<tr>`;
+            if (row === 1) {
+              html += `<td onclick="postCommand('SCORE_0x0')">0</td>`;
+            } else if (row === 2) {
+              html += `<td onclick="postCommand('SCORE_1x25')">25</td>`;
+            } else {
+              html += `<td onclick="postCommand('SCORE_2x25')">50</td>`;
+            }
+
+            for (let dart = 1 ; dart <= 20 ; dart++) {
+              html += `<td onclick="postCommand('SCORE_${row}x${dart}')">`;
+              if (row === 2) {
+                html += 'D';
+              } else if (row === 3) {
+                html += 'T';
+              }
+              html += `${dart}</td>`;
+            }
+            html += `</tr>`;
+          }
+        html += `</table>`;
+      }
+
       html += `<table class="speech">`;
       for (const command of state.possibleThingsToSay ?? []) {
         if (command.textToSay !== '<score>') {
@@ -197,6 +243,7 @@
                 dartDescription = '-';
               } else if (baseValue === 25 && multiplier === 2) {
                 dartDescription = '50';
+                ignored = darts[dart].status !== 'OK';
               } else {
                 ignored = darts[dart].status !== 'OK';
                 if (multiplier === 2) {

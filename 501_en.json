@@ -47,7 +47,7 @@
     "vosk_model_path": "vosk-model-small-en-us-0.15",
     "tokens": {
         "GUINNESS": ["guinness", "get us", "give us", "eunice", "dennis", "nice", "ness", "jonas", "he next", "the next", "can us",
-                     "good us", "i guess", "can ask", "you next", "u s next", "dns"],
+                     "good us", "i guess", "can ask", "you next", "u s next", "dns", "guess"],
         "FRENCH": ["french"],
         "NEW": ["new", "near", "you", "your"],
         "GAME": ["game"],
