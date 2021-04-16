@@ -149,8 +149,12 @@
       const root = document.getElementById('unrecognizedTextRoot');
       let html = '';
       html += `<div class="alert">`;
-      if (state.unrecognizedText) {
-        html += `${escapeHtml(state.unrecognizedText.iDidntUnderstandLabel)}: "${escapeHtml(state.unrecognizedText.text)}"`;
+      if (state.lastPartOfSpeech) {
+        if (state.lastPartOfSpeech.iDidntUnderstandLabel) {
+          html += `${escapeHtml(state.lastPartOfSpeech.iDidntUnderstandLabel)}: "${escapeHtml(state.lastPartOfSpeech.text)}"`;
+        } else {
+          html += `"${escapeHtml(state.lastPartOfSpeech.text)}"&nbsp;`;
+        }
       } else {
         html += '&nbsp;';
       }

@@ -94,12 +94,9 @@
         "TRIPLE": ["triple", "people", "drupal", "treble", "dribble", "tripled", "crippled", "cripple"],
         "BULLSEYE": ["bullseye", "bull's eye", "bowles eye"],
         "FIFTY": ["fifty", "shifty"],
-        "LANGUAGE": ["language", "languages"],
-
-        "NOISE_TO_IGNORE": ["potato", "huh", "ah"]
+        "LANGUAGE": ["language", "languages"]
     },
     "patterns": {
-        "NOISE_TO_IGNORE": ["NOISE_TO_IGNORE"],
         "NEW_GAME": ["NEW GAME"],
         "STOP_GAME": ["STOP GAME"],
         "PAUSE_GAME": ["PAUSE GAME"],

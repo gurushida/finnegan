@@ -132,7 +132,7 @@ async function startFart(configFile: string) {
 
     for await (const line of readLines(fartProcess.stdout!)) {
         if (line.startsWith('???:')) {
-            game.unrecognizedText = {
+            game.lastPartOfSpeech = {
                 text: line.substring(4),
                 iDidntUnderstandLabel: msg('I_DIDNT_UNDERSTAND'),
             };
@@ -169,9 +169,9 @@ async function startGameEngine(configFile: string) {
     updatePossibleThingsToSay();
     updatePlayerNames();
 
-    // When switching language, there is no point in showing the last
-    // thing not understood in the previous language
-    game.unrecognizedText = undefined;
+    // When switching language, there is no point in showing the last piece
+    // of text from the previous language
+    game.lastPartOfSpeech = undefined;
     render();
 }
 
@@ -303,9 +303,11 @@ function render() {
 
     printPossibleCommands();
 
-    if (game.unrecognizedText) {
+    if (game.lastPartOfSpeech) {
         console.log();
-        console.log(`${game.unrecognizedText.iDidntUnderstandLabel}: "${game.unrecognizedText.text}"`);
+        if (game.lastPartOfSpeech.iDidntUnderstandLabel) {
+            console.log(`${game.lastPartOfSpeech.iDidntUnderstandLabel}: "${game.lastPartOfSpeech.text}"`);
+        }
     }
 }
 
@@ -358,7 +360,16 @@ function printScoreBoard(g: PlayingState) {
 
 
 function processCommand(cmd: string) {
-    game.unrecognizedText = undefined;
+    game.lastPartOfSpeech = undefined;
+    if (isVoiceCommand(cmd)) {
+        const text = voiceCommand2Text[cmd];
+        if (text) {
+            game.lastPartOfSpeech = {
+                text,
+                iDidntUnderstandLabel: undefined,
+            };        
+        }
+    }
     executeCommand(cmd);
     updatePossibleThingsToSay();
     render();

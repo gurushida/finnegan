@@ -299,9 +299,10 @@ export type State = 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
  | 'PLAYING' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION__PLAYING' | 'GAME_WON'
  | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
 
-export interface UnrecognizedTtext {
+export interface LastPartOfSpeech {
     text: string;
-    iDidntUnderstandLabel: string;
+    // If defined, it means that the text was not recognized as a game command
+    iDidntUnderstandLabel?: string;
 }
 
 export interface BaseGameState {
@@ -315,9 +316,8 @@ export interface BaseGameState {
     possibleThingsToSay: PossibleThingToSay[];
     alternativeLanguages: PossibleThingToSay[];
 
-    // The last piece of text recognized by the speech recognition
-    // tool but not understood as a command by the game engine
-    unrecognizedText?: UnrecognizedTtext;
+    // The last piece of text recognized by the speech recognition tool
+    lastPartOfSpeech?: LastPartOfSpeech;
 }
 
 export interface ValuelessGameState extends BaseGameState {
