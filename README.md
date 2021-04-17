@@ -94,7 +94,7 @@ On MacOS, you need to make sure the Terminal is allowed to access your microphon
 Run `./install_dependencies.sh ` to install the dependencies, i.e. the python modules and data models needed
 to run the speech recognition tool.
 
-Then run `./finnegan 501_en.json` to start playing in English.
+Then run `./finnegan en.json` to start playing in English.
 
 
 ## How does it work ?
@@ -104,7 +104,7 @@ recognition part and the typescript program `finnegan.ts` takes care of the dart
 ## The speech recognition part
 `fart.py` is a generic tool that looks for patterns made of tokens, where each
 token can be matched by several words like accepting "for" for the number "four".
-The files `501_en.json` and `501_fr.json` contain the configurations needed to play
+The files `en.json` and `fr.json` contain the configurations needed to play
 darts in English and French, which include a bit more that the pure speech
 recognition configuration.
 
