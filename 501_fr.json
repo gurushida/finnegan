@@ -25,7 +25,6 @@
         "PAUSE_GAME": "Mettre la reconnaissance vocale en pause",
         "GAME_IS_PAUSED": "Pause",
         "BACK_FROM_PAUSE": "Reprendre la reconnaissance vocale",
-        "CANCEL": "Annuler",
         "START_GAME": "Démarrer la partie",
         "CORRECTION": "Réinitialiser le tour courant",
         "NEXT_TURN": "Passer au tour du joueur suivant",
@@ -37,15 +36,15 @@
         "DART": "Fléchette",
         "IGNORED": "ignorée",
         "I_DIDNT_UNDERSTAND": "Je n'ai pas compris",
-        "UNKNOWN_COMMAND": "Commande inconnue"
+        "UNKNOWN_COMMAND": "Commande inconnue",
+        "YES": "Oui",
+        "NO": "No"
     },
     "alternativeLanguageDescriptions": {
         "LOAD_CONFIG:501_en.json": "Jouer en anglais"
     },
     "vosk_model_path": "vosk-model-small-fr-pguyot-0.3",
     "tokens": {
-        "BINIOU": ["biniou", "binious", "billot", "billots", "bignon", "bignons", "baignant", "mignot", "bing", "vignot", "bignon",
-                   "beignet", "beignets"],
         "ANGLAIS": ["anglais", "franglais"],
         "NOUVELLE": ["nouvelle", "nouvel", "nouvelles"],
         "ARRETER": ["arrêter", "arrêtez", "arrêté", "arrêtés", "arrêtée", "arrêtées", "arrêtait", "arrêtaient"],

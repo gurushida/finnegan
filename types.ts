@@ -29,7 +29,6 @@ export const messageIDs = [
     'PAUSE_GAME',
     'GAME_IS_PAUSED',
     'BACK_FROM_PAUSE',
-    'CANCEL',
     'CORRECTION',
     'START_GAME',
     'NEXT_TURN',
@@ -42,6 +41,8 @@ export const messageIDs = [
     'IGNORED',
     'I_DIDNT_UNDERSTAND',
     'UNKNOWN_COMMAND',
+    'YES',
+    'NO'
 ] as const;
 export type MessageId = typeof messageIDs[number];
 

@@ -204,8 +204,8 @@ function getCommandDescription(cmd: PossibleCommand): string {
         case 'SET_PLAYER_COUNT_9': return msg('9_PLAYER_GAME');
         case 'SET_PLAYER_COUNT_10': return msg('10_PLAYER_GAME');
 
-        case 'ANSWER_YES': return msg('STOP_GAME');
-        case 'ANSWER_NO': return msg('CANCEL');
+        case 'ANSWER_YES': return msg('YES');
+        case 'ANSWER_NO': return msg('NO');
 
         case 'START_GAME': return msg('START_GAME');
         case 'STOP_GAME': return msg('STOP_GAME');
