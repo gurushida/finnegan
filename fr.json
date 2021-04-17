@@ -38,7 +38,9 @@
         "I_DIDNT_UNDERSTAND": "Je n'ai pas compris",
         "UNKNOWN_COMMAND": "Commande inconnue",
         "YES": "Oui",
-        "NO": "No"
+        "NO": "Non",
+        "501": "501",
+        "AROUND_THE_CLOCK": "Horloge"
     },
     "alternativeLanguageDescriptions": {
         "LOAD_CONFIG:en.json": "Jouer en anglais"
@@ -87,9 +89,14 @@
         "VINGT_CINQ": ["vingt-cinq", "vingt cinq"],
         "DOUBLE": ["double", "doubles", "doublé", "doublés", "doublée", "doublées"],
         "TRIPLE": ["triple", "triples", "triplé", "triplés", "tripette", "tripettes", "triplette", "triplettes"],
-        "CINQUANTE": ["cinquante"]
+        "CINQUANTE": ["cinquante"],
+
+        "501": ["501", "cinq cent", "cinq cent un", "cinq cent vingt", "samson"],
+        "HORLOGE": ["horloge", "horloges", "en vosges", "horloger"]
     },
     "patterns": {
+        "501": ["501"],
+        "AROUND_THE_CLOCK": ["HORLOGE"],
         "NEW_GAME": ["NOUVELLE PARTIE"],
         "STOP_GAME": ["ARRETER PARTIE"],
         "PAUSE_GAME": ["PAUSE"],

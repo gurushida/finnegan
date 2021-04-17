@@ -1,4 +1,4 @@
-export type Language = 'en' | 'fr';
+export type Game = '501' | 'around_the_clock';
 
 /**
  * The MessageId type describes the IDs of all the text messages
@@ -42,7 +42,9 @@ export const messageIDs = [
     'I_DIDNT_UNDERSTAND',
     'UNKNOWN_COMMAND',
     'YES',
-    'NO'
+    'NO',
+    '501',
+    'AROUND_THE_CLOCK'
 ] as const;
 export type MessageId = typeof messageIDs[number];
 
@@ -58,6 +60,8 @@ export const SWITCH_LANGUAGE_COMMAND_PREFIX = "LOAD_CONFIG:"
  * by fart.py
  */
 export const voiceCommands = [
+    '501',
+    'AROUND_THE_CLOCK',
     'NEW_GAME',
     'STOP_GAME',
     'PAUSE_GAME',
@@ -165,8 +169,6 @@ export type DartBaseValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
 
 export type DartMultiplier = 0 | 1 | 2 | 3;
 
-export const N_DARTS_PER_TURN = 3;
-
 export interface DifficultyEvent {
     type: 'SET_DIFFICULTY';
     difficulty: Difficulty;
@@ -198,20 +200,6 @@ export interface ValuelessEvent {
 
 export type GameEvent = DifficultyEvent | PlayerCountEvent | AnswerEvent | ScoreEvent | ValuelessEvent;
 
-
-export interface PlayerStatus {
-    description: string;
-    score: number;
-    needADoubleToStart: boolean;
-
-    // This array describes all the darts thrown by the player
-    // Each cell dartsPlayed[n] corresponds to turn.
-    // All cells contain 3 darts except the last one, if the
-    // player is currently playing where the size of the last
-    // dartsPlayed[n] array indicates the number of darts
-    // played so far in this turn
-    dartsPlayed: DartPlayed[][];
-}
 
 /**
  * A dart is ignored if one of the following conditions is met:
@@ -269,9 +257,8 @@ export interface LanguageSwitchCommand {
     description: string;
 }
 
-export type State = 'NOT_PLAYING'
- | 'WAITING_FOR_START'
- | 'PLAYING' | 'GAME_PAUSED' | 'GAME_WON'
+export type State = 'WAITING_FOR_START'
+ | 'PLAYING' | 'GAME_PAUSED' | 'GAME_ENDED'
  |  'WAITING_STOP_GAME_CONFIRMATION';
 
 export interface LastPartOfSpeech {
@@ -280,46 +267,6 @@ export interface LastPartOfSpeech {
     iDidntUnderstandLabel?: string;
 }
 
-export interface BaseGameState {
-    language: string;
-    state: State;
-
-    // A indication or a question to display to the user
-    messageForUser?: string;
-
-    // The possible commands
-    possibleThingsToSay: PossibleThingToSay[];
-    alternativeLanguages: PossibleThingToSay[];
-
-    // The last piece of text recognized by the speech recognition tool
-    lastPartOfSpeech?: LastPartOfSpeech;
-}
-
-export interface ValuelessGameState extends BaseGameState {
-    state: 'NOT_PLAYING';
-}
-
-export interface WaitingForStartState extends BaseGameState {
-    state: 'WAITING_FOR_START';
-    numberOfPlayers: number;
-    difficulty: Difficulty;
-}
-
-export interface PlayingState extends BaseGameState {
-    state: 'PLAYING' | 'GAME_PAUSED' | 'GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
-    difficulty: Difficulty;
-
-    // the number of players is the size of this array
-    playerStatuses: PlayerStatus[];
-
-    // The current game turn
-    turn: number;
-
-    // If the state is 'GAME_WON', the current player is the winner
-    currentPlayer: number;
-}
-
-export type GameState = ValuelessGameState | WaitingForStartState | PlayingState;
 
 /**
  * This represents the structure of the configuration files given to fart.py
@@ -361,3 +308,5 @@ export interface CommandMsg {
 export function isCommandMsg(obj: any): obj is CommandMsg {
     return typeof obj === 'object' && typeof obj.command === 'string';
 }
+
+

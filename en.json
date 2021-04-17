@@ -39,7 +39,9 @@
         "I_DIDNT_UNDERSTAND": "I didn't understand",
         "UNKNOWN_COMMAND": "Unknown command",
         "YES": "Yes",
-        "NO": "No"
+        "NO": "No",
+        "501": "501",
+        "AROUND_THE_CLOCK": "Around the clock"
     },
     "alternativeLanguageDescriptions": {
         "LOAD_CONFIG:fr.json": "Play in French"
@@ -48,8 +50,8 @@
     "tokens": {
         "FRENCH": ["french"],
         "NEW": ["new", "near", "you", "your"],
-        "GAME": ["game", "games"],
-        "PAUSE": ["pause", "pose", "post", "posts", "polls", "both", "foes", "paul's", "poe's"],
+        "GAME": ["game", "games", "gain"],
+        "PAUSE": ["pause", "pose", "post", "posts", "polls", "both", "foes", "paul's", "poe's", "those"],
         "CONTINUE": ["continue"],
         "BEGIN": ["begin"],
         "STOP": ["stop", "stopped", "stump"],
@@ -89,9 +91,15 @@
         "TRIPLE": ["triple", "people", "drupal", "treble", "dribble", "tripled", "crippled", "cripple"],
         "BULLSEYE": ["bullseye", "bull's eye", "bowles eye"],
         "FIFTY": ["fifty", "shifty"],
-        "LANGUAGE": ["language", "languages"]
+        "LANGUAGE": ["language", "languages"],
+
+
+        "501": ["501", "five or one", "fiber one", "five hundred and one", "five or one"],
+        "AROUND_THE_CLOCK": ["around the clock", "round the clock", "run the clock"]
     },
     "patterns": {
+        "501": ["501"],
+        "AROUND_THE_CLOCK": ["AROUND_THE_CLOCK"],
         "NEW_GAME": ["NEW GAME"],
         "STOP_GAME": ["STOP GAME"],
         "PAUSE_GAME": ["PAUSE GAME"],
