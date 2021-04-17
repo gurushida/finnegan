@@ -1,10 +1,12 @@
-export type GameName = '501' | 'around_the_clock';
+export const gameNames = ['501', 'AROUND_THE_CLOCK'] as const;
+export type GameName = typeof gameNames[number];
 
 /**
  * The MessageId type describes the IDs of all the text messages
  * that can be presented to the user. 
  */
 export const messageIDs = [
+    ...gameNames,
     'DIFFICULTY',
     'EASY',
     'MEDIUM',
@@ -44,8 +46,6 @@ export const messageIDs = [
     'UNKNOWN_COMMAND',
     'YES',
     'NO',
-    '501',
-    'AROUND_THE_CLOCK'
 ] as const;
 export type MessageId = typeof messageIDs[number];
 

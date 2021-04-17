@@ -96,7 +96,7 @@
         "LANGUAGE": ["language", "languages"],
 
 
-        "501": ["501", "five or one", "fiber one", "five hundred and one", "five or one", "five who one"],
+        "501": ["501", "five or one", "fiber one", "five hundred and one", "five or one", "five who one", "taiwan"],
         "AROUND_THE_CLOCK": ["around the clock", "round the clock", "run the clock"]
     },
     "patterns": {

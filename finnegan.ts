@@ -1,6 +1,6 @@
 import { GameEngine, PlayerStatus } from "./gameengine.ts";
 import { Language } from "./language.ts";
-import { GameName, isVoiceCommand, LastPartOfSpeech, PossibleCommand, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX } from "./types.ts";
+import { GameName, gameNames, isVoiceCommand, LastPartOfSpeech, PossibleCommand, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX } from "./types.ts";
 import { readLines } from 'std/io/bufio.ts';
 import { GameEngine501 } from './501.ts';
 
@@ -97,7 +97,7 @@ export class Finnegan {
             if (cmd === '501') {
                 this.gameName = '501';
             } else if (cmd === 'AROUND_THE_CLOCK') {
-                this.gameName = 'around_the_clock';
+                this.gameName = 'AROUND_THE_CLOCK';
             } else if (cmd === 'NEW_GAME') {
                 if (this.gameName === '501') {
                     this.gameEngine = new GameEngine501();
@@ -125,7 +125,7 @@ export class Finnegan {
         this.messageForUser = undefined;
         if (!this.gameEngine) {
             if (this.gameName !== '501') {
-                this.messageForUser = `${this.gameName} not supported yet`;
+                this.messageForUser = `${this.language.msg(this.gameName)} not supported yet`;
             }
             return;
         }
@@ -207,7 +207,13 @@ export class Finnegan {
         console.log('\\---------------------------------------------------/');
         console.log();
 
-        this.gameEngine?.renderForConsole(this.language);
+        if (!this.gameEngine) {
+            for (const game of gameNames) {
+                console.log(`${(game === this.gameName) ? ' => ' : '    '}${this.language.msg(game)}`);
+            }
+        } else {
+            this.gameEngine.renderForConsole(this.language);
+        }
 
         console.log();
         if (this.messageForUser) {
@@ -236,11 +242,11 @@ export class Finnegan {
             if (command.command.startsWith('SCORE_')) {
                 continue;
             }
-            commandLines.push(`_${command.textToSay.padEnd(maxLen)}_     _${command.description}_`);
+            commandLines.push(`${command.textToSay.padEnd(maxLen)}     ${command.description}`);
         }
         commandLines.push('');
         for (const altLang of this.language.getAlternativeLanguages()) {
-            commandLines.push(`_${altLang.textToSay.padEnd(maxLen)}_     _${altLang.description}_`);
+            commandLines.push(`${altLang.textToSay.padEnd(maxLen)}     ${altLang.description}`);
         }
 
         const maxLineLen = Math.max(...(commandLines.map(line => line.length)));
