@@ -250,9 +250,8 @@
     }
 
 
-    function getPointClass(needDoubleToFinish, playerStatus, multiplier, baseValue) {
-      const good = isGoodMove(needDoubleToFinish, playerStatus, multiplier, baseValue);
-      return good ? ' class="good"' : ' class="bad"';
+    function getPointClass(legalMoves, command) {
+      return legalMoves[command] ? ' class="good"' : ' class="bad"';
     }
 
 
@@ -265,19 +264,28 @@
       if (hasTextToSay(state, '<score>')) {
         const needDoubleToFinish = state.difficulty !== 'easy';
         const playerStatus = state.playerStatuses[state.currentPlayer];
+
+        const legalMoves = {};
+        for (const command of state.possibleThingsToSay) {
+          if (command.command.startsWith("SCORE_")) {
+            legalMoves[command.command] = true;
+          }
+        }
+
         html += `<table class='scorebuttons'>`;
           for (let row = 1 ; row <= 3 ; row++) {
             html += `<tr>`;
             if (row === 1) {
-              html += `<td ${getPointClass(needDoubleToFinish, playerStatus, 0, 0)} onclick="postCommand('SCORE_0x0')">0</td>`;
+              html += `<td ${getPointClass(legalMoves, 'SCORE_0x0')} onclick="postCommand('SCORE_0x0')">0</td>`;
             } else if (row === 2) {
-              html += `<td ${getPointClass(needDoubleToFinish, playerStatus, 1, 25)} onclick="postCommand('SCORE_1x25')">25</td>`;
+              html += `<td ${getPointClass(legalMoves, 'SCORE_1x25')} onclick="postCommand('SCORE_1x25')">25</td>`;
             } else {
-              html += `<td ${getPointClass(needDoubleToFinish, playerStatus, 2, 25)} onclick="postCommand('SCORE_2x25')">50</td>`;
+              html += `<td ${getPointClass(legalMoves, 'SCORE_2x25')} onclick="postCommand('SCORE_2x25')">50</td>`;
             }
 
             for (let dart = 1 ; dart <= 20 ; dart++) {
-              html += `<td ${getPointClass(needDoubleToFinish, playerStatus, row, dart)} onclick="postCommand('SCORE_${row}x${dart}')">`;
+              const pointClass = getPointClass(legalMoves, `SCORE_${row}x${dart}`);
+              html += `<td ${pointClass} onclick="postCommand('SCORE_${row}x${dart}')">`;
               if (row === 2) {
                 html += 'D';
               } else if (row === 3) {
@@ -294,15 +302,16 @@
       for (const command of state.possibleThingsToSay ?? []) {
         if (commandButtons.includes(command.command)
             || command.command.startsWith('SET_DIFFICULTY_')
-            || command.command.startsWith('SET_PLAYER_COUNT_')) {
+            || command.command.startsWith('SET_PLAYER_COUNT_')
+            || command.command.startsWith('SCORE_')
+            || command.textToSay === '<score>') {
           continue;
         }
-        if (command.textToSay !== '<score>') {
-          html += `<tr class="nonscorespeech" onclick="postCommand('${command.command}')">`;
-          html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
-          html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
-          html += `</tr>`;
-        }
+
+        html += `<tr class="nonscorespeech" onclick="postCommand('${command.command}')">`;
+        html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
+        html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
+        html += `</tr>`;
       }
       html += `</table>`;
       html += `<br/>`;
@@ -315,29 +324,6 @@
         html += `<button class='languageButton' onclick="postCommand('${lang.command}')">${lang.textToSay}</button>`;
       }
       textRoot.innerHTML = html;
-    }
-
-
-    function isGoodMove(needDoubleToFinish, playerStatus, multiplier, baseValue) {
-      if (baseValue === 0) {
-        return false;
-      }
-      if (playerStatus.needADoubleToStart && multiplier !== 2) {
-        return false;
-      }
-      if (baseValue * multiplier > playerStatus.score) {
-        return false;
-      }
-      if (baseValue * multiplier === playerStatus.score) {
-        if (needDoubleToFinish) {
-          return multiplier === 2;
-        }
-        return true;
-      }
-      if ((baseValue * multiplier === playerStatus.score - 1) && needDoubleToFinish) {
-        return false;
-      }
-      return true;
     }
 
 

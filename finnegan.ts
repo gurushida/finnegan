@@ -1,6 +1,6 @@
 import { GameEvent, Answer, isVoiceCommand, DartPlayed, PlayerStatus, DartMultiplier,
     DartBaseValue, N_DARTS_PER_TURN, GameState, PlayingState, PossibleCommand, VoiceCommand,
-    voiceCommands, Difficulty, State, ValuelessGameState, MessageId, FinneganConfig, messageIDs, SWITCH_LANGUAGE_COMMAND_PREFIX, isCommandMsg
+    voiceCommands, Difficulty, State, ValuelessGameState, MessageId, FinneganConfig, messageIDs, SWITCH_LANGUAGE_COMMAND_PREFIX, isCommandMsg, DartStatus
 } from './types.ts';
 import { serve } from 'std/http/server.ts';
 import { readLines } from 'std/io/bufio.ts';
@@ -136,7 +136,7 @@ async function startFart(configFile: string) {
                 text: line.substring(4),
                 iDidntUnderstandLabel: msg('I_DIDNT_UNDERSTAND'),
             };
-            render();
+            refresh();
         } else if (line.startsWith('CMD:')) {
             processCommand(line.substring(4));
         }
@@ -164,13 +164,13 @@ async function startGameEngine(configFile: string) {
     populateAlternativeLanguageMap();
 
     startFart(configFile);
-    updatePossibleThingsToSay();
     updatePlayerNames();
 
     // When switching language, there is no point in showing the last piece
     // of text from the previous language
     game.lastPartOfSpeech = undefined;
-    render();
+
+    refresh();
 }
 
 
@@ -214,7 +214,13 @@ function getCommandDescription(cmd: PossibleCommand): string {
         case 'CORRECTION': return msg('CORRECTION');
         case 'NEXT_TURN': return msg('NEXT_TURN');
         case '<score>': return msg('SCORE');
-        default: throw 'Illegal cmd value';
+        default: {
+            if (cmd.startsWith('SCORE_')) {
+                return msg('SCORE');
+            }
+
+            throw 'Illegal cmd value';
+        }
     }
 }
 
@@ -224,6 +230,9 @@ function printPossibleCommands() {
                             ...Object.keys(game.alternativeLanguages).map(p => p.length));
     const commandLines: string [] = [`${msg('POSSIBLE_THINGS_TO_SAY')}:`, ''];
     for (const command of game.possibleThingsToSay) {
+        if (command.command.startsWith('SCORE_')) {
+            continue;
+        }
         commandLines.push(`${command.textToSay.padEnd(maxLen)}     ${command.description}`);
     }
     commandLines.push('');
@@ -364,6 +373,11 @@ function processCommand(cmd: string) {
         }
     }
     executeCommand(cmd);
+    refresh();
+}
+
+
+function refresh() {
     updatePossibleThingsToSay();
     render();
 }
@@ -528,11 +542,6 @@ function startGame() {
 }
 
 
-function isDouble(dart: DartPlayed) {
-    return dart.multiplier === 2;
-}
-
-
 function getDartScore(dart: DartPlayed) {
     return dart.multiplier * dart.baseValue;
 }
@@ -569,6 +578,7 @@ function getPossibleCommands(state: State): PossibleCommand[] {
                 cmds.push('NEXT_TURN');
             } else {
                 cmds.push('<score>');
+                cmds.push(...getLegalMoveCommands());
             }
             return cmds;
         }
@@ -693,49 +703,18 @@ function processEvent(event: GameEvent): boolean {
                 const dart: DartPlayed = {
                     baseValue: event.baseValue,
                     multiplier: event.multiplier,
-                    status: 'OK',
+                    status: getMoveStatus(event.multiplier, event.baseValue),
                 };
                 game.playerStatuses[game.currentPlayer].dartsPlayed[game.turn].push(dart);
-
-                const currentScore = game.playerStatuses[game.currentPlayer].score;
-                if (game.playerStatuses[game.currentPlayer].needADoubleToStart) {
-                    if (isDouble(dart)) {
-                        // If we need a double start, we are still at 501 so any double
-                        // is guaranteed to be valid
+                if (dart.status === 'OK') {
+                    if (dart.multiplier === 2) {
                         game.playerStatuses[game.currentPlayer].needADoubleToStart = false;
-                    } else {
-                        // We need a double and did not get one
-                        dart.status = 'NEED_A_DOUBLE_TO_START';
-                        return true;
+                    }
+                    game.playerStatuses[game.currentPlayer].score -= (dart.multiplier * dart.baseValue);
+                    if (game.playerStatuses[game.currentPlayer].score === 0) {
+                        gameOver();
                     }
                 }
-                const dartScore = getDartScore(dart);
-                if (dartScore > currentScore) {
-                    // If the dart would make the score be negative, we have to ignore it
-                    dart.status = 'SCORE_CANNOT_BE_NEGATIVE';
-                    return true;
-                }
-                if (dartScore === currentScore - 1) {
-                    if (game.difficulty !== 'easy') {
-                        // If we need a double to finish, ending up with 1 is illegal
-                        dart.status = 'SCORE_CANNOT_BE_1';
-                        return true;
-                    }
-                    game.playerStatuses[game.currentPlayer].score = 1;
-                    return true;
-                }
-                if (dartScore === currentScore) {
-                    if (game.difficulty !== 'easy' && !isDouble(dart)) {
-                        // If we need a double to finish and haven't got one, we ignore the dart
-                        dart.status = 'NEED_A_DOUBLE_TO_END';
-                        return true;
-                    }
-                    // We have reached 0, game is over
-                    game.playerStatuses[game.currentPlayer].score = 0;
-                    gameOver();
-                    return true;
-                }
-                game.playerStatuses[game.currentPlayer].score -= dartScore;
                 return true;
             }
             break;
@@ -773,6 +752,72 @@ function isTurnComplete() {
         throw 'Illegal state';
     }
     return game.playerStatuses[game.currentPlayer].dartsPlayed[game.turn].length === N_DARTS_PER_TURN;
+}
+
+
+/**
+ * Returns 'OK' if the given dart is a legal move at the current
+ * point in the game, or a message describing why not.
+ */
+function getMoveStatus(multiplier: number, baseValue: number): DartStatus {
+    if (game.state !== 'PLAYING') {
+        throw 'Illegal state';
+    }
+    if (baseValue === 0) {
+        return 'ZERO';
+    }
+
+    const playerStatus = game.playerStatuses[game.currentPlayer];
+    const needDoubleToFinish = game.difficulty !== 'easy';
+
+    if (playerStatus.needADoubleToStart && multiplier !== 2) {
+        return 'NEED_A_DOUBLE_TO_START';
+    }
+
+    if (baseValue * multiplier > playerStatus.score) {
+        return 'SCORE_CANNOT_BE_NEGATIVE';
+    }
+
+    if (baseValue * multiplier === playerStatus.score) {
+        if (needDoubleToFinish) {
+            return multiplier === 2 ? 'OK' : 'NEED_A_DOUBLE_TO_END';
+        }
+        return 'OK';
+    }
+
+    if ((baseValue * multiplier === playerStatus.score - 1) && needDoubleToFinish) {
+        return 'SCORE_CANNOT_BE_1';
+    }
+
+    return 'OK';
+}
+
+
+/**
+ * Returns an array containing all the score commands that are relevant
+ * at the current point of the game, like for instance discarding dart
+ * values that are too high.
+ */
+function getLegalMoveCommands() {
+    if (game.state !== 'PLAYING') {
+        throw 'Illegal state';
+    }
+    const legalMoves: PossibleCommand[] = [];
+
+    for (let multiplier = 1 ; multiplier <= 3 ; multiplier++) {
+        for (let baseValue = 1 ; baseValue <= 20 ; baseValue++) {
+            if ('OK' === getMoveStatus(multiplier, baseValue)) {
+                legalMoves.push(`SCORE_${multiplier}x${baseValue}` as PossibleCommand);
+            }
+        }
+    }
+    if ('OK' === getMoveStatus(1, 25)) {
+        legalMoves.push('SCORE_1x25');
+    }
+    if ('OK' === getMoveStatus(2, 25)) {
+        legalMoves.push('SCORE_2x25');
+    }
+    return legalMoves;
 }
 
 

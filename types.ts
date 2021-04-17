@@ -151,30 +151,7 @@ export type VoiceCommand = typeof voiceCommands[number];
  * Since there are many score commands, we use '<score>' as a special
  * symbol indicating that any score command is accepted.
  */
-export type PossibleCommand =
-    'NEW_GAME'
-    | 'STOP_GAME'
-    | 'PAUSE_GAME'
-    | 'CONTINUE_GAME'
-    | 'CORRECTION'
-    | 'START_GAME'
-    | 'NEXT_TURN'
-    | 'ANSWER_YES'
-    | 'ANSWER_NO'
-    | 'SET_DIFFICULTY_EXPERT'
-    | 'SET_DIFFICULTY_MEDIUM'
-    | 'SET_DIFFICULTY_EASY'
-    | 'SET_PLAYER_COUNT_1'
-    | 'SET_PLAYER_COUNT_2'
-    | 'SET_PLAYER_COUNT_3'
-    | 'SET_PLAYER_COUNT_4'
-    | 'SET_PLAYER_COUNT_5'
-    | 'SET_PLAYER_COUNT_6'
-    | 'SET_PLAYER_COUNT_7'
-    | 'SET_PLAYER_COUNT_8'
-    | 'SET_PLAYER_COUNT_9'
-    | 'SET_PLAYER_COUNT_10'
-    | '<score>';
+export type PossibleCommand = VoiceCommand | '<score>';
 
 export type Difficulty = 'expert' | 'medium' | 'easy';
 
@@ -251,6 +228,7 @@ export interface PlayerStatus {
  *    score become 1 which would make it impossible to finish the game
  */
 export type DartStatus = 'OK'
+  | 'ZERO'
   | 'NEED_A_DOUBLE_TO_START'
   | 'NEED_A_DOUBLE_TO_END'
   | 'SCORE_CANNOT_BE_NEGATIVE'
