@@ -5,7 +5,7 @@ import { isCommandMsg } from './types.ts';
 
 export class Server {
 
-    constructor(private port: number, private finnegan: Finnegan) {
+    constructor(port: number, private finnegan: Finnegan) {
         void this.startServer(port);
     }
 
@@ -19,7 +19,7 @@ export class Server {
                 request.respond({
                     status: 200,
                     headers,
-                    body: JSON.stringify(this.finnegan.getJson(), null, 2)
+                    body: JSON.stringify(this.finnegan.getState(), null, 2)
                 });
             } else if (request.method === 'GET' &&
                 (request.url === '' || request.url === '/' || request.url === '/finnegan.html')) {

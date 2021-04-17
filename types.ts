@@ -1,4 +1,4 @@
-export type Game = '501' | 'around_the_clock';
+export type GameName = '501' | 'around_the_clock';
 
 /**
  * The MessageId type describes the IDs of all the text messages
@@ -32,6 +32,7 @@ export const messageIDs = [
     'CORRECTION',
     'START_GAME',
     'NEXT_TURN',
+    'BACK',
     'ARE_YOU_SURE_YOU_TO_STOP_THE_GAME',
     'SCORE',
     'POSSIBLE_THINGS_TO_SAY',
@@ -69,6 +70,7 @@ export const voiceCommands = [
     'CORRECTION',
     'START_GAME',
     'NEXT_TURN',
+    'BACK',
     'SET_DIFFICULTY_EXPERT',
     'SET_DIFFICULTY_MEDIUM',
     'SET_DIFFICULTY_EASY',
@@ -195,7 +197,7 @@ export interface ScoreEvent {
 }
 
 export interface ValuelessEvent {
-    type: 'NEW_GAME' | 'START_GAME' | 'STOP_GAME' | 'PAUSE_GAME' | 'CONTINUE_GAME' | 'CORRECTION' | 'NEXT_TURN';
+    type: 'NEW_GAME' | 'START_GAME' | 'STOP_GAME' | 'PAUSE_GAME' | 'CONTINUE_GAME' | 'CORRECTION' | 'NEXT_TURN' | 'BACK';
 }
 
 export type GameEvent = DifficultyEvent | PlayerCountEvent | AnswerEvent | ScoreEvent | ValuelessEvent;

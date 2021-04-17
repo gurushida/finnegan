@@ -144,6 +144,7 @@ export class Language {
             case 'CONTINUE_GAME': return this.msg('BACK_FROM_PAUSE');
             case 'CORRECTION': return this.msg('CORRECTION');
             case 'NEXT_TURN': return this.msg('NEXT_TURN');
+            case 'BACK': return this.msg('BACK');
             case '<score>': return this.msg('SCORE');
             default: {
                 if (cmd.startsWith('SCORE_')) {

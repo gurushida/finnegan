@@ -1,6 +1,6 @@
 import { Language } from './language.ts';
 import { VoiceCommand, DartBaseValue, DartStatus, DartMultiplier,
-    Answer, GameEvent, Game, DartPlayed, State, PossibleCommand } from "./types.ts";
+    Answer, GameEvent, GameName, DartPlayed, State, PossibleCommand } from "./types.ts";
 
 export interface PlayerStatus {
     description: string;
@@ -28,7 +28,7 @@ export abstract class GameEngine<PS extends PlayerStatus> {
     // that the game was stopped.
     winner?: number;
 
-    constructor(readonly game: Game, public numberOfPlayers: number) {}
+    constructor(readonly game: GameName, public numberOfPlayers: number) {}
 
     abstract createPlayer(playerIndex: number): PS;
 
@@ -89,7 +89,9 @@ export abstract class GameEngine<PS extends PlayerStatus> {
             case 'GAME_PAUSED': return ['CONTINUE_GAME'];
     
             case 'WAITING_STOP_GAME_CONFIRMATION': return ['ANSWER_YES', 'ANSWER_NO'];
-    
+
+            case 'GAME_ENDED': return [ 'BACK' ];
+
             default: return [];
         }
     }
@@ -105,6 +107,7 @@ export abstract class GameEngine<PS extends PlayerStatus> {
      */
     public convertCommandToEvent(cmd: VoiceCommand): GameEvent | undefined {
         switch (cmd) {
+            case 'BACK': return { type: 'BACK' };
             case 'STOP_GAME': return { type: 'STOP_GAME' };
             case 'PAUSE_GAME': return { type: 'PAUSE_GAME' };
             case 'CONTINUE_GAME': return { type: 'CONTINUE_GAME' };
@@ -296,8 +299,31 @@ export abstract class GameEngine<PS extends PlayerStatus> {
                 }
                 break;
             }
+
+            case 'GAME_ENDED': {
+                if (event.type === 'BACK') {
+                    this.gameOver(undefined);
+                }
+                break;
+            }
         }
     }
 
     abstract renderForConsole(language: Language): void;
+
+
+    /**
+     * Returns a state object object containing all information needed
+     * to render it. Subclass may add their own values.
+     */
+    getEngineState() {
+        return {
+            state: this.state,
+            playerStatuses: this.playerStatuses,
+            currentPlayer: this. currentPlayer,
+            numberOfPlayers: this.numberOfPlayers,
+            turn: this.turn,
+            winner: this.winner,
+        };
+    }
 }

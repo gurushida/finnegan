@@ -41,14 +41,15 @@
         "YES": "Yes",
         "NO": "No",
         "501": "501",
-        "AROUND_THE_CLOCK": "Around the clock"
+        "AROUND_THE_CLOCK": "Around the clock",
+        "BACK": "Back"
     },
     "alternativeLanguageDescriptions": {
         "LOAD_CONFIG:fr.json": "Play in French"
     },
     "vosk_model_path": "vosk-model-small-en-us-0.15",
     "tokens": {
-        "FRENCH": ["french"],
+        "FRENCH": ["french", "trench"],
         "NEW": ["new", "near", "you", "your"],
         "GAME": ["game", "games", "gain"],
         "PAUSE": ["pause", "pose", "post", "posts", "polls", "both", "foes", "paul's", "poe's", "those"],
@@ -56,6 +57,7 @@
         "BEGIN": ["begin"],
         "STOP": ["stop", "stopped", "stump"],
         "NEXT": ["next"],
+        "BACK": ["back"],
         "CORRECTION": ["correction"],
         "YES": ["yes"],
         "NO": ["no"],
@@ -94,7 +96,7 @@
         "LANGUAGE": ["language", "languages"],
 
 
-        "501": ["501", "five or one", "fiber one", "five hundred and one", "five or one"],
+        "501": ["501", "five or one", "fiber one", "five hundred and one", "five or one", "five who one"],
         "AROUND_THE_CLOCK": ["around the clock", "round the clock", "run the clock"]
     },
     "patterns": {
@@ -107,6 +109,7 @@
         "CORRECTION": ["CORRECTION"],
         "START_GAME": ["BEGIN"],
         "NEXT_TURN": ["NEXT PLAYER", "NEXT PLAYERS"],
+        "BACK": ["BACK"],
         "SET_DIFFICULTY_EXPERT": ["EXPERT"],
         "SET_DIFFICULTY_MEDIUM": ["MEDIUM"],
         "SET_DIFFICULTY_EASY": ["EASY"],

@@ -1,14 +1,41 @@
 import { GameEngine, PlayerStatus } from "./gameengine.ts";
 import { Language } from "./language.ts";
-import { Game, isVoiceCommand, LastPartOfSpeech, PossibleCommand, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX } from "./types.ts";
+import { GameName, isVoiceCommand, LastPartOfSpeech, PossibleCommand, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX } from "./types.ts";
 import { readLines } from 'std/io/bufio.ts';
 import { GameEngine501 } from './501.ts';
+
+
+/**
+ * This describes what will be served when doing a GET on /state
+ */
+interface FinneganState {
+
+    // The current selected game if we are on the home screen;
+    // the name of the game running otherwise
+    gameName: GameName;
+
+    // If not defined, we are on the home screen, waiting to start a game engine.
+    // Otherwise, this is a game-specific object describing the state of the engine
+    gameEngineState?: Record<string, unknown>;
+
+    // All the commands that can be executed
+    possibleThingsToSay: PossibleThingToSay[];
+
+    // Commands
+    alternativeLanguages: PossibleThingToSay[];
+
+    // Something to show the user, like a question
+    messageForUser?: string;
+
+    // The last piece of text recognized by the speech recognition tool
+    lastPartOfSpeech?: LastPartOfSpeech;
+}
 
 
 export class Finnegan {
 
     private fartProcess: Deno.Process | undefined;
-    private gameType: Game = '501';
+    private gameName: GameName = '501';
 
     private gameEngine?: GameEngine<PlayerStatus>;
     private possibleThingsToSay: PossibleThingToSay[] = [];
@@ -24,8 +51,15 @@ export class Finnegan {
     this.onLanguageUpdated();
     }
 
-    public getJson(): Record<string, unknown> {
-        return {};
+    public getState(): FinneganState {
+        return {
+            gameName: this.gameName,
+            possibleThingsToSay: this.possibleThingsToSay,
+            alternativeLanguages: this.language.getAlternativeLanguages(),
+            messageForUser: this.messageForUser,
+            lastPartOfSpeech: this.lastPartOfSpeech,
+            gameEngineState: this.gameEngine?.getEngineState()
+        };
     }
 
 
@@ -61,11 +95,11 @@ export class Finnegan {
 
         if (!this.gameEngine) {
             if (cmd === '501') {
-                this.gameType = '501';
+                this.gameName = '501';
             } else if (cmd === 'AROUND_THE_CLOCK') {
-                this.gameType = 'around_the_clock';
+                this.gameName = 'around_the_clock';
             } else if (cmd === 'NEW_GAME') {
-                if (this.gameType === '501') {
+                if (this.gameName === '501') {
                     this.gameEngine = new GameEngine501();
                 }
             }
@@ -79,7 +113,7 @@ export class Finnegan {
         if (event) {
             this.gameEngine.processEvent(event);
             this.updatePlayerNames();
-            if (this.gameEngine.state === 'GAME_ENDED' && !this.gameEngine.winner) {
+            if (this.gameEngine.state === 'GAME_ENDED' && this.gameEngine.winner === undefined) {
                 // When a game is stopped (state GAME_ENDED and no winner), we want to
                 // go back to the game selection
                 this.gameEngine = undefined;
@@ -90,8 +124,8 @@ export class Finnegan {
     private updateMessageForUser() {
         this.messageForUser = undefined;
         if (!this.gameEngine) {
-            if (this.gameType !== '501') {
-                this.messageForUser = `${this.gameType} not supported yet`;
+            if (this.gameName !== '501') {
+                this.messageForUser = `${this.gameName} not supported yet`;
             }
             return;
         }
@@ -100,10 +134,11 @@ export class Finnegan {
             case 'GAME_PAUSED': this.messageForUser = `< ${this.language.msg('GAME_IS_PAUSED')} >`; break;
             case 'WAITING_STOP_GAME_CONFIRMATION': this.messageForUser = this.language.msg('ARE_YOU_SURE_YOU_TO_STOP_THE_GAME'); break;
             case 'GAME_ENDED': {
-                if (this.gameEngine.winner) {
+                if (this.gameEngine.winner !== undefined) {
                     const winner = this.gameEngine.playerStatuses[this.gameEngine.winner].description;
                     this.messageForUser = `${winner} ${this.language.msg('_WON')}`;
                 }
+                break;
             }
         }
     }
@@ -192,18 +227,20 @@ export class Finnegan {
 
 
     private printPossibleCommands() {
-        const maxLen = Math.max(...(this.possibleThingsToSay.map(p => p.textToSay.length)),
-                                ...Object.keys(this.language.getAlternativeLanguages()).map(p => p.length));
+        const thingsToSay = [...this.possibleThingsToSay, ...this.language.getAlternativeLanguages()]
+          .filter(command => !command.command.startsWith('SCORE_'));
+        const maxLen = Math.max(...thingsToSay.map(p => p.textToSay.length));
+
         const commandLines: string [] = [`${this.language.msg('POSSIBLE_THINGS_TO_SAY')}:`, ''];
         for (const command of this.possibleThingsToSay) {
             if (command.command.startsWith('SCORE_')) {
                 continue;
             }
-            commandLines.push(`${command.textToSay.padEnd(maxLen)}     ${command.description}`);
+            commandLines.push(`_${command.textToSay.padEnd(maxLen)}_     _${command.description}_`);
         }
         commandLines.push('');
         for (const altLang of this.language.getAlternativeLanguages()) {
-            commandLines.push(`${altLang.textToSay.padEnd(maxLen)}     ${altLang.description}`);
+            commandLines.push(`_${altLang.textToSay.padEnd(maxLen)}_     _${altLang.description}_`);
         }
 
         const maxLineLen = Math.max(...(commandLines.map(line => line.length)));

@@ -236,5 +236,10 @@ export class GameEngine501 extends GameEngine<PlayerStatus501> {
     
         console.log();
     }
-    
+
+    public getEngineState() {
+        const obj = super.getEngineState();
+        return { ...obj, difficulty: this.difficulty };
+    }
+
 }
