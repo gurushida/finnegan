@@ -41,7 +41,7 @@
         "NO": "No"
     },
     "alternativeLanguageDescriptions": {
-        "LOAD_CONFIG:501_en.json": "Jouer en anglais"
+        "LOAD_CONFIG:en.json": "Jouer en anglais"
     },
     "vosk_model_path": "vosk-model-small-fr-pguyot-0.3",
     "tokens": {
@@ -175,6 +175,6 @@
         "SCORE_3x20": ["TRIPLE VINGT"],
         "SCORE_1x25": ["VINGT_CINQ"],
         "SCORE_2x25": ["CINQUANTE", "DOUBLE VINGT_CINQ"],
-        "LOAD_CONFIG:501_en.json": ["ANGLAIS"]
+        "LOAD_CONFIG:en.json": ["ANGLAIS"]
     }
 }
