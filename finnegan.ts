@@ -44,7 +44,7 @@ function populateAlternativeLanguageMap() {
                 console.error(`Missing token sequence for \'${pattern}\'`);
                 Deno.exit(1);
             }
-            const textToSay = `"${tokenSequence2TextToSay(tokenSequence[0])}"`;
+            const textToSay = `${tokenSequence2TextToSay(tokenSequence[0])}`;
             const description = config.alternativeLanguageDescriptions[pattern];
             game.alternativeLanguages.push({
                 command: pattern,
@@ -181,7 +181,7 @@ function msg(msgId: MessageId) {
 
 function getVocalCommand(cmd: PossibleCommand): string {
     if (cmd === '<score>') return cmd;
-    return `"${voiceCommand2Text[cmd] as string}"`;
+    return `${voiceCommand2Text[cmd] as string}`;
 }
 
 

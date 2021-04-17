@@ -30,14 +30,6 @@
       color:rgb(224, 17, 69);
     }
 
-    tr.lang:hover {
-      color:rgb(224, 17, 69);
-    }
-
-    tr.lang {
-      color: rgb(90 128 239);
-    }
-
     td.title {
       vertical-align: middle;
     }
@@ -130,6 +122,16 @@
       cursor: pointer;
     }
 
+    .languageButton {
+      font-family: 'Oxanium', cursive;
+      font-size: 30px;
+      padding: 10px;
+      background-color: rgb(105 31 31);
+      color: white;
+      width: fit-content;
+      cursor: pointer;
+    }
+
     .alert {
       font-family: 'Roboto Mono', monospace;
       font-size: 16px;
@@ -181,15 +183,8 @@
       const difficultyCommands = ['SET_DIFFICULTY_EASY', 'SET_DIFFICULTY_MEDIUM', 'SET_DIFFICULTY_EXPERT'];
       for (const command of difficultyCommands) {
         if (c = hasCommand(state, command)) {
-          let text = c.textToSay;
-          while (text.startsWith('"')) {
-            text = text.substring(1);
-          }
-          while (text.endsWith('"')) {
-            text = text.substring(0, text.length - 1);
-          }
           const selected = isSelectedDifficulty(state, c);
-          html += `<button style='width:140px' class='${selected ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${text}</button>`;
+          html += `<button style='width:140px' class='${selected ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${c.textToSay}</button>`;
         }
       }
 
@@ -309,26 +304,15 @@
           html += `</tr>`;
         }
       }
-
-      for (const language of state.alternativeLanguages ?? []) {
-        html += `<tr class='lang' onclick="postCommand('${language.command}')">`;
-        html += `<td>${escapeHtml(language.textToSay)}&nbsp;&nbsp;</td>`;
-        html += `<td>${escapeHtml(language.description)}</td>`;
-        html += `</tr>`;
-      }
-
       html += `</table>`;
+      html += `<br/>`;
       for (const command of commandButtons) {
         if (c = hasCommand(state, command)) {
-          let text = c.textToSay;
-          while (text.startsWith('"')) {
-            text = text.substring(1);
-          }
-          while (text.endsWith('"')) {
-            text = text.substring(0, text.length - 1);
-          }
-          html += `<button class='actionButton' onclick="postCommand('${command}')">${text}</button>`;
+          html += `<button class='actionButton' onclick="postCommand('${command}')">${c.textToSay}</button>`;
         }
+      }
+      for (const lang of state.alternativeLanguages) {
+        html += `<button class='languageButton' onclick="postCommand('${lang.command}')">${lang.textToSay}</button>`;
       }
       textRoot.innerHTML = html;
     }
