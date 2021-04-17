@@ -30,11 +30,9 @@ export const messageIDs = [
     'GAME_IS_PAUSED',
     'BACK_FROM_PAUSE',
     'CANCEL',
-    'QUIT',
     'CORRECTION',
     'START_GAME',
     'NEXT_TURN',
-    'ARE_YOU_SURE_YOU_WANT_TO_QUIT',
     'ARE_YOU_SURE_YOU_TO_STOP_THE_GAME',
     'SCORE',
     'POSSIBLE_THINGS_TO_SAY',
@@ -63,7 +61,6 @@ export const voiceCommands = [
     'STOP_GAME',
     'PAUSE_GAME',
     'CONTINUE_GAME',
-    'QUIT',
     'CORRECTION',
     'START_GAME',
     'NEXT_TURN',
@@ -158,7 +155,6 @@ export type PossibleCommand =
     | 'STOP_GAME'
     | 'PAUSE_GAME'
     | 'CONTINUE_GAME'
-    | 'QUIT'
     | 'CORRECTION'
     | 'START_GAME'
     | 'NEXT_TURN'
@@ -219,7 +215,7 @@ export interface ScoreEvent {
 }
 
 export interface ValuelessEvent {
-    type: 'NEW_GAME' | 'START_GAME' | 'STOP_GAME' | 'PAUSE_GAME' | 'CONTINUE_GAME' | 'QUIT' | 'CORRECTION' | 'NEXT_TURN';
+    type: 'NEW_GAME' | 'START_GAME' | 'STOP_GAME' | 'PAUSE_GAME' | 'CONTINUE_GAME' | 'CORRECTION' | 'NEXT_TURN';
 }
 
 export type GameEvent = DifficultyEvent | PlayerCountEvent | AnswerEvent | ScoreEvent | ValuelessEvent;
@@ -294,10 +290,10 @@ export interface LanguageSwitchCommand {
     description: string;
 }
 
-export type State = 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING'
- | 'WAITING_FOR_START' | 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START'
- | 'PLAYING' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION__PLAYING' | 'GAME_WON'
- | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
+export type State = 'NOT_PLAYING'
+ | 'WAITING_FOR_START'
+ | 'PLAYING' | 'GAME_PAUSED' | 'GAME_WON'
+ |  'WAITING_STOP_GAME_CONFIRMATION';
 
 export interface LastPartOfSpeech {
     text: string;
@@ -321,18 +317,17 @@ export interface BaseGameState {
 }
 
 export interface ValuelessGameState extends BaseGameState {
-    state: 'NOT_PLAYING' | 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
+    state: 'NOT_PLAYING';
 }
 
 export interface WaitingForStartState extends BaseGameState {
-    state: 'WAITING_FOR_START' | 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
+    state: 'WAITING_FOR_START';
     numberOfPlayers: number;
     difficulty: Difficulty;
 }
 
 export interface PlayingState extends BaseGameState {
-    state: 'PLAYING' | 'GAME_PAUSED' | 'WAITING_QUIT_CONFIRMATION__PLAYING' | 'GAME_WON'
-           | 'WAITING_QUIT_CONFIRMATION__GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
+    state: 'PLAYING' | 'GAME_PAUSED' | 'GAME_WON' | 'WAITING_STOP_GAME_CONFIRMATION';
     difficulty: Difficulty;
 
     // the number of players is the size of this array
@@ -341,8 +336,7 @@ export interface PlayingState extends BaseGameState {
     // The current game turn
     turn: number;
 
-    // If the state is 'GAME_WON' or 'WAITING_QUIT_CONFIRMATION__GAME_WON'
-    // the current player is the winner
+    // If the state is 'GAME_WON', the current player is the winner
     currentPlayer: number;
 }
 

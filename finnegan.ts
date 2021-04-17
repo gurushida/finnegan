@@ -147,9 +147,7 @@ async function startFart(configFile: string) {
 function updatePlayerNames() {
     if (game.state === 'PLAYING'
       || game.state === 'GAME_PAUSED'
-      || game.state === 'WAITING_QUIT_CONFIRMATION__PLAYING'
       || game.state === 'GAME_WON'
-      || game.state === 'WAITING_QUIT_CONFIRMATION__GAME_WON'
       || game.state === 'WAITING_STOP_GAME_CONFIRMATION') {
         for (let i = 0 ; i < game.playerStatuses.length ; i++) {
             game.playerStatuses[i].description = `${msg('PLAYER')} ${i + 1}`;
@@ -206,14 +204,13 @@ function getCommandDescription(cmd: PossibleCommand): string {
         case 'SET_PLAYER_COUNT_9': return msg('9_PLAYER_GAME');
         case 'SET_PLAYER_COUNT_10': return msg('10_PLAYER_GAME');
 
-        case 'ANSWER_YES': return game.state === 'WAITING_STOP_GAME_CONFIRMATION' ? msg('STOP_GAME') : msg('QUIT');
+        case 'ANSWER_YES': return msg('STOP_GAME');
         case 'ANSWER_NO': return msg('CANCEL');
 
         case 'START_GAME': return msg('START_GAME');
         case 'STOP_GAME': return msg('STOP_GAME');
         case 'PAUSE_GAME': return msg('PAUSE_GAME');
         case 'CONTINUE_GAME': return msg('BACK_FROM_PAUSE');
-        case 'QUIT': return msg('QUIT');
         case 'CORRECTION': return msg('CORRECTION');
         case 'NEXT_TURN': return msg('NEXT_TURN');
         case '<score>': return msg('SCORE');
@@ -277,11 +274,7 @@ function render() {
         case 'NOT_PLAYING': {
             break;
         }
-        case 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING': {
-            break;
-        }
-        case 'WAITING_FOR_START':
-        case 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START': {
+        case 'WAITING_FOR_START': {
             const labelDifficulty = `${msg('DIFFICULTY')}:`;
             const labelPlayers = `${msg('NUMBER_OF_PLAYERS')}:`;
             const maxLen = Math.max(labelDifficulty.length, labelPlayers.length);
@@ -394,7 +387,6 @@ function executeCommand(cmd: string) {
         case 'STOP_GAME': processEvent({type: 'STOP_GAME'}); break;
         case 'PAUSE_GAME': processEvent({type: 'PAUSE_GAME'}); break;
         case 'CONTINUE_GAME': processEvent({type: 'CONTINUE_GAME'}); break;
-        case 'QUIT': processEvent({type: 'QUIT'}); break;
         case 'CORRECTION': processEvent({type: 'CORRECTION'}); break;
         case 'START_GAME': processEvent({type: 'START_GAME'}); break;
         case 'NEXT_TURN': processEvent({type: 'NEXT_TURN'}); break;
@@ -431,7 +423,7 @@ function executeCommand(cmd: string) {
         case 'SCORE_1x9':
         // deno-lint-ignore no-fallthrough
         case 'SCORE_1x10': {
-            if (game.state === 'WAITING_FOR_START' || game.state === 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START') {
+            if (game.state === 'WAITING_FOR_START') {
                 // If we get a number between 1 and 10 when configuring the game, let's
                 // interpret that as a number of players
                 processEvent({type: 'SET_PLAYER_COUNT', numberOfPlayers: parseInt(cmd.substring('SCORE_1x'.length))});
@@ -551,17 +543,10 @@ function isIgnored(dart: DartPlayed) {
 }
 
 
-function quit() {
-    console.log('Bye bye...');
-    console.log();
-    Deno.exit(0);
-}
-
-
 function getPossibleCommands(state: State): PossibleCommand[] {
     switch (state) {
         case 'NOT_PLAYING':
-        case 'GAME_WON': return ['NEW_GAME', 'QUIT'];
+        case 'GAME_WON': return ['NEW_GAME'];
 
         case 'WAITING_FOR_START': return [
             'START_GAME',
@@ -577,10 +562,9 @@ function getPossibleCommands(state: State): PossibleCommand[] {
             'SET_PLAYER_COUNT_7',
             'SET_PLAYER_COUNT_8',
             'SET_PLAYER_COUNT_9',
-            'SET_PLAYER_COUNT_10',
-            'QUIT'];
+            'SET_PLAYER_COUNT_10'];
         case 'PLAYING': {
-            const cmds: PossibleCommand[] = ['QUIT', 'PAUSE_GAME', 'STOP_GAME', 'CORRECTION'];
+            const cmds: PossibleCommand[] = ['PAUSE_GAME', 'STOP_GAME', 'CORRECTION'];
             if (isTurnComplete()) {
                 cmds.push('NEXT_TURN');
             } else {
@@ -590,11 +574,7 @@ function getPossibleCommands(state: State): PossibleCommand[] {
         }
         case 'GAME_PAUSED': return ['CONTINUE_GAME'];
 
-        case 'WAITING_STOP_GAME_CONFIRMATION':
-        case 'WAITING_QUIT_CONFIRMATION__GAME_WON':
-        case 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING':
-        case 'WAITING_QUIT_CONFIRMATION__PLAYING':
-        case 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START': return ['ANSWER_YES', 'ANSWER_NO'];
+        case 'WAITING_STOP_GAME_CONFIRMATION': return ['ANSWER_YES', 'ANSWER_NO'];
     }
 }
 
@@ -610,30 +590,6 @@ function waitForStart() {
         messageForUser: undefined,
     };
     populateAlternativeLanguageMap();
-}
-
-
-function waitForQuitAnswerWhileNotPlaying() {
-    game.state = 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING';
-    game.messageForUser = msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT');
-}
-
-
-function waitForQuitAnswerWhenGameIsWon() {
-    game.state = 'WAITING_QUIT_CONFIRMATION__GAME_WON';
-    game.messageForUser = msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT');
-}
-
-
-function waitForQuitAnswerWhileWaitingForStart() {
-    game.state = 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START';
-    game.messageForUser = msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT');
-}
-
-
-function waitForQuitAnswerWhilePlaying() {
-    game.state = 'WAITING_QUIT_CONFIRMATION__PLAYING';
-    game.messageForUser = msg('ARE_YOU_SURE_YOU_WANT_TO_QUIT');
 }
 
 
@@ -675,10 +631,6 @@ function processEvent(event: GameEvent): boolean {
                 waitForStart();
                 return true;
             }
-            if (event.type === 'QUIT') {
-                waitForQuitAnswerWhileNotPlaying();
-                return true;
-            }
             break;
         }
 
@@ -688,18 +640,10 @@ function processEvent(event: GameEvent): boolean {
                 waitForStart();
                 return true;
             }
-            if (event.type === 'QUIT') {
-                waitForQuitAnswerWhenGameIsWon();
-                return true;
-            }
             break;
         }
     
         case 'WAITING_FOR_START': {
-            if (event.type === 'QUIT') {
-                waitForQuitAnswerWhileWaitingForStart();
-                return true;
-            }
             if (event.type === 'SET_PLAYER_COUNT') {
                 lastNumberOfPlayers = event.numberOfPlayers;
                 game.numberOfPlayers = event.numberOfPlayers;
@@ -718,10 +662,6 @@ function processEvent(event: GameEvent): boolean {
         }
 
         case 'PLAYING': {
-            if (event.type === 'QUIT') {
-                waitForQuitAnswerWhilePlaying();
-                return true;
-            }
             if (event.type === 'PAUSE_GAME') {
                 pauseGame();
                 return true;
@@ -805,55 +745,6 @@ function processEvent(event: GameEvent): boolean {
             if (event.type === 'CONTINUE_GAME') {
                 continuePlaying();
                 return true;
-            }
-            break;
-        }
-
-        case 'WAITING_QUIT_CONFIRMATION__NOT_PLAYING': {
-            if (event.type === 'ANSWER') {
-                if (event.answer === Answer.YES) {
-                    quit();
-                } else {
-                    game = getBlankState(config.language);
-                    populateAlternativeLanguageMap();
-                    return true;
-                }
-            }
-            break;
-        }
-
-        case 'WAITING_QUIT_CONFIRMATION__WAITING_FOR_START': {
-            if (event.type === 'ANSWER') {
-                if (event.answer === Answer.YES) {
-                    quit();
-                } else {
-                    waitForStart();
-                    return true;
-                }
-            }
-            break;
-        }
-
-        case 'WAITING_QUIT_CONFIRMATION__PLAYING': {
-            if (event.type === 'ANSWER') {
-                if (event.answer === Answer.YES) {
-                    quit();
-                } else {
-                    continuePlaying();
-                    return true;
-                }
-            }
-            break;
-        }
-
-        case 'WAITING_QUIT_CONFIRMATION__GAME_WON': {
-            if (event.type === 'ANSWER') {
-                if (event.answer === Answer.YES) {
-                    quit();
-                } else {
-                    gameOver();
-                    return true;
-                }
             }
             break;
         }
