@@ -75,7 +75,7 @@
         "FIVE": ["five", "fight"],
         "SIX": ["six"],
         "SEVEN": ["seven"],
-        "EIGHT": ["eight", "hate", "hates", "h"],
+        "EIGHT": ["eight", "hate", "hates", "h", "heat"],
         "NINE": ["nine"],
         "TEN": ["ten", "town", "down", "turn", "then", "damn", "tenth", "tap"],
         "ELEVEN": ["eleven", "levin", "live in", "eleventh"],
@@ -96,7 +96,7 @@
         "LANGUAGE": ["language", "languages"],
 
 
-        "501": ["501", "five or one", "fiber one", "five hundred and one", "five or one", "five who one", "taiwan"],
+        "501": ["501", "five or one", "fiber one", "five hundred and one", "five a one", "five who one", "taiwan", "hi ho one"],
         "AROUND_THE_CLOCK": ["around the clock", "round the clock", "run the clock"]
     },
     "patterns": {

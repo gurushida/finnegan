@@ -146,6 +146,7 @@
   <script>
 
     function render(state) {
+      renderGameSelection(state);
       renderPreStartConfig(state);
       renderScores(state);
       renderTextToSay(state);
@@ -163,27 +164,66 @@
     }
 
 
-    function isSelectedDifficulty(state, command) {
-      if (state.difficulty === 'easy') {
+    function isSelectedDifficulty501(state, command) {
+      if (state.gameEngineState.difficulty === 'easy') {
         return command.command === 'SET_DIFFICULTY_EASY';
       }
-      if (state.difficulty === 'medium') {
+      if (state.gameEngineState.difficulty === 'medium') {
         return command.command === 'SET_DIFFICULTY_MEDIUM';
       }
-      if (state.difficulty === 'expert') {
+      if (state.gameEngineState.difficulty === 'expert') {
         return command.command === 'SET_DIFFICULTY_EXPERT';
       }
       return false;
     }
 
 
+    function isSelectedGame(state, command) {
+      if (state.gameName === '501') {
+        return command.command === '501';
+      }
+      if (state.gameName === 'AROUND_THE_CLOCK') {
+        return command.command === 'AROUND_THE_CLOCK';
+      }
+      return false;
+    }
+
+
+    function renderGameSelection(state) {
+      const root = document.getElementById('gameSelectionRoot');
+      root.innerHTML = '';
+      if (state.gameEngineState) {
+        return;
+      }
+
+      let html = '';
+      const games = ['501', 'AROUND_THE_CLOCK'];
+      for (const game of games) {
+        if (c = hasCommand(state, game)) {
+          const selected = isSelectedGame(state, c);
+          html += `<button class='${selected ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${c.textToSay}</button>`;
+        }
+      }
+      root.innerHTML = html;
+    }
+
+
+
     function renderPreStartConfig(state) {
       const root = document.getElementById('preStartConfigRoot');
+      root.innerHTML = '';
+      if (state.gameName === '501') {
+        root.innerHTML = renderPreStartConfig501(state);
+      }
+    }
+
+
+    function renderPreStartConfig501(state) {
       let html = '';
       const difficultyCommands = ['SET_DIFFICULTY_EASY', 'SET_DIFFICULTY_MEDIUM', 'SET_DIFFICULTY_EXPERT'];
       for (const command of difficultyCommands) {
         if (c = hasCommand(state, command)) {
-          const selected = isSelectedDifficulty(state, c);
+          const selected = isSelectedDifficulty501(state, c);
           html += `<button style='width:140px' class='${selected ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${c.textToSay}</button>`;
         }
       }
@@ -191,11 +231,11 @@
       html += '<br/>';
       for (let playerCount = 1 ; playerCount <= 10 ; playerCount++) {
         if (c = hasCommand(state, `SET_PLAYER_COUNT_${playerCount}`)) {
-          html += `<button style='width:70px' class='${playerCount === state.numberOfPlayers ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${playerCount}</button>`;
+          html += `<button style='width:70px' class='${playerCount === state.gameEngineState.numberOfPlayers ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${playerCount}</button>`;
         }
       }
 
-      root.innerHTML = html;
+      return html;
     }
 
 
@@ -260,11 +300,8 @@
       let html = '';
       let c;
       const commandButtons = ['NEW_GAME', 'START_GAME', 'ANSWER_YES', 'ANSWER_NO',
-        'CORRECTION', 'NEXT_TURN', 'PAUSE_GAME', 'CONTINUE_GAME', 'STOP_GAME', 'QUIT'];
+        'CORRECTION', 'NEXT_TURN', 'PAUSE_GAME', 'CONTINUE_GAME', 'STOP_GAME', 'BACK'];
       if (hasTextToSay(state, '<score>')) {
-        const needDoubleToFinish = state.difficulty !== 'easy';
-        const playerStatus = state.playerStatuses[state.currentPlayer];
-
         const legalMoves = {};
         for (const command of state.possibleThingsToSay) {
           if (command.command.startsWith("SCORE_")) {
@@ -304,7 +341,9 @@
             || command.command.startsWith('SET_DIFFICULTY_')
             || command.command.startsWith('SET_PLAYER_COUNT_')
             || command.command.startsWith('SCORE_')
-            || command.textToSay === '<score>') {
+            || command.textToSay === '<score>'
+            || command.command === '501'
+            || command.command === 'AROUND_THE_CLOCK') {
           continue;
         }
 
@@ -320,7 +359,7 @@
           html += `<button class='actionButton' onclick="postCommand('${command}')">${c.textToSay}</button>`;
         }
       }
-      for (const lang of state.alternativeLanguages) {
+      for (const lang of state.alternativeLanguages ?? []) {
         html += `<button class='languageButton' onclick="postCommand('${lang.command}')">${lang.textToSay}</button>`;
       }
       textRoot.innerHTML = html;
@@ -329,13 +368,24 @@
 
     function renderScores(state) {
       const scoreBoardRoot = document.getElementById('scoreBoardRoot');
-      if (!state.playerStatuses || state.playerStatuses.length === 0) {
-        scoreBoardRoot.innerHTML = '';
-        return;
+      scoreBoardRoot.innerHTML = '';
+      if (state.gameName === '501') {
+        scoreBoardRoot.innerHTML = renderScores501(state.gameEngineState);
       }
 
-      const N_PLAYERS = state.playerStatuses.length;
-      const N_TURNS = state.turn;
+      // In case there is not enough room to display all turns,
+      // let's hide the oldest
+      adjustScoreTable(state.gameEngineState);
+    }
+
+
+    function renderScores501(gameEngineState) {
+      if (!gameEngineState || !gameEngineState.playerStatuses || gameEngineState.playerStatuses.length === 0) {
+        return '';
+      }
+
+      const N_PLAYERS = gameEngineState.numberOfPlayers;
+      const N_TURNS = gameEngineState.turn;
 
       let html = '';
       html += `<br/>`;
@@ -349,12 +399,12 @@
       html += `</tr>`;
 
       for (let p = 0; p < N_PLAYERS; p++) {
-        const status = state.playerStatuses[p];
+        const status = gameEngineState.playerStatuses[p];
         html += `<tr>`;
-        if (p === state.currentPlayer) {
-          html += `<td class="currentPlayer">&#9656;${state.playerStatuses[p].description}&nbsp;&nbsp;</td>`;
+        if (p === gameEngineState.currentPlayer) {
+          html += `<td class="currentPlayer">&#9656;${gameEngineState.playerStatuses[p].description}&nbsp;&nbsp;</td>`;
         } else {
-          html += `<td class="player">&nbsp;&nbsp;${state.playerStatuses[p].description}&nbsp;&nbsp;</td>`;
+          html += `<td class="player">&nbsp;&nbsp;${gameEngineState.playerStatuses[p].description}&nbsp;&nbsp;</td>`;
         }
         html += `<td class="score">${status.score}&nbsp;&nbsp;</td>`;
         for (let turn = 0; turn <= N_TURNS; turn++) {
@@ -393,28 +443,27 @@
         html += `</tr>`;
       }
       html += `</table>`;
-      scoreBoardRoot.innerHTML = html;
-
-      // In case there is not enough room to display all turns,
-      // let's hide the oldest
-
-      adjustScoreTable(state);
+      return html;
     }
 
-    function hideTurn(n, state) {
+    function hideTurn(n, gameEngineState) {
       document.getElementById(`turn${n}`).style.display="none";
-      for (let p = 0 ; p < state.playerStatuses.length ; p++) {
+      for (let p = 0 ; p < gameEngineState.numberOfPlayers ; p++) {
         document.getElementById(`p${p}turn${n}dart0`).style.display="none";
         document.getElementById(`p${p}turn${n}dart1`).style.display="none";
         document.getElementById(`p${p}turn${n}dart2`).style.display="none";
       }
     }
 
-    function adjustScoreTable(state) {
+    function adjustScoreTable(gameEngineState) {
+      if (!gameEngineState) {
+        return;
+      }
+
       const scoreTable = document.getElementById('scores');
       let n = 0
-      while (n < state.turn && scoreTable.clientWidth > window.innerWidth) {
-        hideTurn(n, state);
+      while (n < gameEngineState.turn && scoreTable.clientWidth > window.innerWidth) {
+        hideTurn(n, gameEngineState);
         n++;
       }
     }
@@ -455,6 +504,7 @@
     </tr>
   </table>
 
+  <div id='gameSelectionRoot'></div>
   <div id='preStartConfigRoot'></div>
   <div id='scoreBoardRoot'></div>
   <div id='messageRoot'></div>
