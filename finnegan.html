@@ -30,10 +30,6 @@
       color:rgb(224, 17, 69);
     }
 
-    tr.scorespeech {
-      cursor: default;
-    }
-
     tr.lang:hover {
       color:rgb(224, 17, 69);
     }
@@ -308,11 +304,6 @@
         }
         if (command.textToSay !== '<score>') {
           html += `<tr class="nonscorespeech" onclick="postCommand('${command.command}')">`;
-          html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
-          html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
-          html += `</tr>`;
-        } else {
-          html += `<tr class="scorespeech">`;
           html += `<td>${escapeHtml(command.textToSay)}&nbsp;&nbsp;</td>`;
           html += `<td>${escapeHtml(command.description)}&nbsp;&nbsp;</td>`;
           html += `</tr>`;
