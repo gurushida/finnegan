@@ -29,47 +29,6 @@ export class GameEngineAroundTheClock extends GameEngine<PlayerStatusAroundTheCl
     }
 
 
-    convertCommandToEvent(cmd: VoiceCommand): GameEvent | undefined {
-        switch (cmd) {
-            case 'SET_PLAYER_COUNT_1':
-            case 'SET_PLAYER_COUNT_2':
-            case 'SET_PLAYER_COUNT_3':
-            case 'SET_PLAYER_COUNT_4':
-            case 'SET_PLAYER_COUNT_5':
-            case 'SET_PLAYER_COUNT_6':
-            case 'SET_PLAYER_COUNT_7':
-            case 'SET_PLAYER_COUNT_8':
-            case 'SET_PLAYER_COUNT_9':
-            case 'SET_PLAYER_COUNT_10': {
-                return { type: 'SET_PLAYER_COUNT', numberOfPlayers: parseInt(cmd.substring('SET_PLAYER_COUNT_'.length)) };
-            }
-
-            case 'SCORE_1x1':
-                case 'SCORE_1x2':
-                case 'SCORE_1x3':
-                case 'SCORE_1x4':
-                case 'SCORE_1x5':
-                case 'SCORE_1x6':
-                case 'SCORE_1x7':
-                case 'SCORE_1x8':
-                case 'SCORE_1x9':
-                // deno-lint-ignore no-fallthrough
-                case 'SCORE_1x10': {
-                    if (this.state === 'WAITING_FOR_START') {
-                        // If we get a number between 1 and 10 when configuring the game, let's
-                        // interpret that as a number of players
-                        return { type: 'SET_PLAYER_COUNT', numberOfPlayers: parseInt(cmd.substring('SCORE_1x'.length)) };
-                    }
-                    // Otherwise, use the fallthrough to proceed with a score command
-                }
-
-            default: {
-                return super.convertCommandToEvent(cmd);
-            }
-        }
-    }
-
-
     processConfigEvent(event: GameEvent) {
         if (event.type === 'SET_PLAYER_COUNT') {
             lastNumberOfPlayers = event.numberOfPlayers;
