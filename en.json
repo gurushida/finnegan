@@ -42,7 +42,8 @@
         "NO": "No",
         "501": "501",
         "AROUND_THE_CLOCK": "Around the clock",
-        "BACK": "Back"
+        "BACK": "Back",
+        "NEEDS_TO_HIT": "needs to hit"
     },
     "alternativeLanguageDescriptions": {
         "LOAD_CONFIG:fr.json": "Play in French"
@@ -110,7 +111,7 @@
         "CONTINUE_GAME": ["CONTINUE GAME"],
         "CORRECTION": ["CORRECTION"],
         "START_GAME": ["BEGIN"],
-        "NEXT_TURN": ["NEXT PLAYER", "NEXT PLAYERS"],
+        "NEXT_TURN": ["NEXT"],
         "BACK": ["BACK"],
         "SET_DIFFICULTY_EXPERT": ["EXPERT"],
         "SET_DIFFICULTY_MEDIUM": ["MEDIUM"],

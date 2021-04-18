@@ -3,6 +3,7 @@ import { Language } from "./language.ts";
 import { GameName, gameNames, isVoiceCommand, LastPartOfSpeech, PossibleCommand, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX } from "./types.ts";
 import { readLines } from 'std/io/bufio.ts';
 import { GameEngine501 } from './501.ts';
+import { GameEngineAroundTheClock } from './aroundTheClock.ts';
 
 
 /**
@@ -101,6 +102,8 @@ export class Finnegan {
             } else if (cmd === 'NEW_GAME') {
                 if (this.gameName === '501') {
                     this.gameEngine = new GameEngine501();
+                } else if (this.gameName === 'AROUND_THE_CLOCK') {
+                    this.gameEngine = new GameEngineAroundTheClock();
                 }
             }
             this.updatePlayerNames();
@@ -124,9 +127,6 @@ export class Finnegan {
     private updateMessageForUser() {
         this.messageForUser = undefined;
         if (!this.gameEngine) {
-            if (this.gameName !== '501') {
-                this.messageForUser = `${this.language.msg(this.gameName)} not supported yet`;
-            }
             return;
         }
 

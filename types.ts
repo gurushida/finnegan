@@ -46,6 +46,7 @@ export const messageIDs = [
     'UNKNOWN_COMMAND',
     'YES',
     'NO',
+    'NEEDS_TO_HIT',
 ] as const;
 export type MessageId = typeof messageIDs[number];
 
@@ -222,7 +223,8 @@ export type DartStatus = 'OK'
   | 'NEED_A_DOUBLE_TO_START'
   | 'NEED_A_DOUBLE_TO_END'
   | 'SCORE_CANNOT_BE_NEGATIVE'
-  | 'SCORE_CANNOT_BE_1';
+  | 'SCORE_CANNOT_BE_1'
+  | 'WRONG_NUMBER';
 
 export interface DartPlayed {
     baseValue: DartBaseValue;
