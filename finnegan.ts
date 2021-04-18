@@ -137,7 +137,7 @@ export class Finnegan {
             case 'GAME_ENDED': {
                 if (this.gameEngine.winner !== undefined) {
                     const winner = this.gameEngine.playerStatuses[this.gameEngine.winner].description;
-                    this.messageForUser = `${winner} ${this.language.msg('_WON')}`;
+                    this.messageForUser = this.gameEngine.getGameOverMessage(this.language);
                 }
                 break;
             }

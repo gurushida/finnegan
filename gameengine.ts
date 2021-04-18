@@ -369,4 +369,12 @@ export abstract class GameEngine<PS extends PlayerStatus> {
             winner: this.winner,
         };
     }
+
+
+    getGameOverMessage(language: Language) {
+        if (this.winner === undefined) {
+            throw 'Illegal state';
+        }
+        return `${this.playerStatuses[this.winner].description} ${language.msg('_WON')}`;
+    }
 }
