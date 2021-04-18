@@ -29,8 +29,7 @@ export abstract class GameEngine<PS extends PlayerStatus> {
     turn = 0;
 
     // When the state is GAME_ENDED, this field indicates the index of
-    // the winner in the playerStatuses array. If not defined, it means
-    // that the game was stopped.
+    // the winner in the playerStatuses array
     winner?: number;
 
     constructor(readonly game: GameName, public numberOfPlayers: number) {}
@@ -345,7 +344,9 @@ export abstract class GameEngine<PS extends PlayerStatus> {
 
             case 'GAME_ENDED': {
                 if (event.type === 'BACK') {
-                    this.gameOver(undefined);
+                    // This is a special state to tell the main controller
+                    // to drop this game engine and go back to the home screen
+                    this.state = 'BACK_TO_HOME_SCREEN';
                 }
                 break;
             }

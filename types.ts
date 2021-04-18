@@ -268,7 +268,8 @@ export interface LanguageSwitchCommand {
 
 export type State = 'WAITING_FOR_START'
  | 'PLAYING' | 'GAME_PAUSED' | 'GAME_ENDED'
- |  'WAITING_STOP_GAME_CONFIRMATION';
+ | 'WAITING_STOP_GAME_CONFIRMATION'
+ | 'BACK_TO_HOME_SCREEN';
 
 export interface LastPartOfSpeech {
     text: string;

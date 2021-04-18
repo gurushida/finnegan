@@ -137,9 +137,7 @@ export class Finnegan {
         if (event) {
             this.gameEngine.processEvent(event);
             this.updatePlayerNames();
-            if (this.gameEngine.state === 'GAME_ENDED' && this.gameEngine.winner === undefined) {
-                // When a game is stopped (state GAME_ENDED and no winner), we want to
-                // go back to the game selection
+            if (this.gameEngine.state === 'BACK_TO_HOME_SCREEN') {
                 this.gameEngine = undefined;
             }
         }
@@ -155,12 +153,7 @@ export class Finnegan {
         switch(this.gameEngine.state) {
             case 'GAME_PAUSED': this.messageForUser = `< ${this.language.msg('GAME_IS_PAUSED')} >`; break;
             case 'WAITING_STOP_GAME_CONFIRMATION': this.messageForUser = this.language.msg('ARE_YOU_SURE_YOU_TO_STOP_THE_GAME'); break;
-            case 'GAME_ENDED': {
-                if (this.gameEngine.winner !== undefined) {
-                    this.messageForUser = this.gameEngine.getGameOverMessage(this.language);
-                }
-                break;
-            }
+            case 'GAME_ENDED': this.messageForUser = this.gameEngine.getGameOverMessage(this.language); break;
         }
     }
 

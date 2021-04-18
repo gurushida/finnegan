@@ -40,7 +40,7 @@ export class GameEnginePursuit extends GameEngine<PlayerStatusPursuit> {
 
         // If any hound reaches the hare's number, the hare loses
         if (this.currentPlayer !== 0 && dart.baseValue === this.playerStatuses[0].location) {
-            this.gameOver(this.currentPlayer);
+            this.gameOver(undefined);
             return;
         }
 
@@ -161,6 +161,14 @@ export class GameEnginePursuit extends GameEngine<PlayerStatusPursuit> {
         }
 
         return super.convertCommandToEvent(cmd);
+    }
+
+    getGameOverMessage(language: Language) {
+        if (this.winner === 0) {
+            return language.msg('THE_HARE_WON');
+        } else {
+            return language.msg('THE_HARE_LOST');
+        }
     }
 
 }
