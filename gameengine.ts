@@ -2,6 +2,12 @@ import { Language } from './language.ts';
 import { VoiceCommand, DartBaseValue, DartStatus, DartMultiplier,
     Answer, GameEvent, GameName, DartPlayed, State, PossibleCommand } from "./types.ts";
 
+
+// Global number of players, since it is quite likely
+// that the same group of players will play multiple time a row
+export let lastNumberOfPlayers = 2;
+
+
 export interface PlayerStatus {
     description: string;
 
@@ -13,7 +19,6 @@ export interface PlayerStatus {
     // played so far in this turn
     dartsPlayed: DartPlayed[][];
 }
-
 
 
 export abstract class GameEngine<PS extends PlayerStatus> {
@@ -74,7 +79,18 @@ export abstract class GameEngine<PS extends PlayerStatus> {
      */
     getPossibleCommands(): PossibleCommand[] {
         switch (this.state) {
-            case 'WAITING_FOR_START': return [ 'START_GAME' ];
+            case 'WAITING_FOR_START': return [
+                'START_GAME',
+                'SET_PLAYER_COUNT_1',
+                'SET_PLAYER_COUNT_2',
+                'SET_PLAYER_COUNT_3',
+                'SET_PLAYER_COUNT_4',
+                'SET_PLAYER_COUNT_5',
+                'SET_PLAYER_COUNT_6',
+                'SET_PLAYER_COUNT_7',
+                'SET_PLAYER_COUNT_8',
+                'SET_PLAYER_COUNT_9',
+                'SET_PLAYER_COUNT_10'];
 
             case 'PLAYING': {
                 const cmds: PossibleCommand[] = ['PAUSE_GAME', 'STOP_GAME', 'CORRECTION'];
@@ -117,6 +133,19 @@ export abstract class GameEngine<PS extends PlayerStatus> {
 
             case 'ANSWER_YES': return { type: 'ANSWER', answer: Answer.YES };
             case 'ANSWER_NO': return { type: 'ANSWER', answer: Answer.NO };
+
+            case 'SET_PLAYER_COUNT_1':
+            case 'SET_PLAYER_COUNT_2':
+            case 'SET_PLAYER_COUNT_3':
+            case 'SET_PLAYER_COUNT_4':
+            case 'SET_PLAYER_COUNT_5':
+            case 'SET_PLAYER_COUNT_6':
+            case 'SET_PLAYER_COUNT_7':
+            case 'SET_PLAYER_COUNT_8':
+            case 'SET_PLAYER_COUNT_9':
+            case 'SET_PLAYER_COUNT_10': {
+                return { type: 'SET_PLAYER_COUNT', numberOfPlayers: parseInt(cmd.substring('SET_PLAYER_COUNT_'.length)) };
+            }
 
             case 'SCORE_1x1':
             case 'SCORE_1x2':
@@ -205,6 +234,11 @@ export abstract class GameEngine<PS extends PlayerStatus> {
      * before the game has started.
      */
     public processConfigEvent(event: GameEvent) {
+        if (event.type === 'SET_PLAYER_COUNT') {
+            lastNumberOfPlayers = event.numberOfPlayers;
+            this.numberOfPlayers = event.numberOfPlayers;
+            return;
+        }
         if (event.type === 'START_GAME') {
             this.startGame();
         }

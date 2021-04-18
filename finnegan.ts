@@ -48,8 +48,8 @@ export class Finnegan {
     lastPartOfSpeech?: LastPartOfSpeech;
 
 
-    constructor(private language: Language, private device: string|undefined, private samplerate: string|undefined) {
-    this.onLanguageUpdated();
+    constructor(private language: Language, private useFart: boolean, private device: string|undefined, private samplerate: string|undefined) {
+        this.onLanguageUpdated();
     }
 
     public getState(): FinneganState {
@@ -123,6 +123,7 @@ export class Finnegan {
             }
         }
     }
+
 
     private updateMessageForUser() {
         this.messageForUser = undefined;
@@ -271,7 +272,9 @@ export class Finnegan {
 
 
     public onLanguageUpdated() {
-        this.startFart(this.language.configFile);
+        if (this.useFart) {
+            this.startFart(this.language.configFile);
+        }
         this.updatePlayerNames();
 
         // When switching language, there is no point in showing the last piece

@@ -1,10 +1,9 @@
 import { DartPlayed, Difficulty,
   GameEvent, VoiceCommand, DartBaseValue, DartMultiplier, DartStatus, PossibleCommand } from './types.ts';
-import { PlayerStatus, GameEngine } from './gameengine.ts';
+import { PlayerStatus, GameEngine, lastNumberOfPlayers } from './gameengine.ts';
 import { Language } from './language.ts';
 import { isIgnored, getDartDescription } from './utils.ts';
 
-let lastNumberOfPlayers = 2;
 let lastDifficulty: Difficulty = 'easy';
 
 
@@ -22,7 +21,6 @@ export class GameEngine501 extends GameEngine<PlayerStatus501> {
 
     constructor() {
         super('501', lastNumberOfPlayers);
-        console.log(`lastNumberOfPlayers: ${lastNumberOfPlayers}, this.numberOfPlayers = ${this.numberOfPlayers}`);
         this.difficulty = lastDifficulty;
         this.playerNeedADoubleToStartFromLastTurn = this.difficulty === 'expert';
     }
@@ -51,15 +49,10 @@ export class GameEngine501 extends GameEngine<PlayerStatus501> {
 
 
     processConfigEvent(event: GameEvent) {
-        if (event.type === 'SET_PLAYER_COUNT') {
-            lastNumberOfPlayers = event.numberOfPlayers;
-            this.numberOfPlayers = event.numberOfPlayers;
-            return true;
-        }
         if (event.type === 'SET_DIFFICULTY') {
             lastDifficulty = event.difficulty;
             this.difficulty = event.difficulty;
-            return true;
+            return;
         }
         super.processConfigEvent(event);
     }
@@ -133,17 +126,7 @@ export class GameEngine501 extends GameEngine<PlayerStatus501> {
         if (this.state === 'WAITING_FOR_START') commands.push(
             'SET_DIFFICULTY_EXPERT',
             'SET_DIFFICULTY_MEDIUM',
-            'SET_DIFFICULTY_EASY',
-            'SET_PLAYER_COUNT_1',
-            'SET_PLAYER_COUNT_2',
-            'SET_PLAYER_COUNT_3',
-            'SET_PLAYER_COUNT_4',
-            'SET_PLAYER_COUNT_5',
-            'SET_PLAYER_COUNT_6',
-            'SET_PLAYER_COUNT_7',
-            'SET_PLAYER_COUNT_8',
-            'SET_PLAYER_COUNT_9',
-            'SET_PLAYER_COUNT_10');
+            'SET_DIFFICULTY_EASY');
 
         return commands;
     }

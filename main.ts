@@ -6,10 +6,7 @@ import { Finnegan } from './finnegan.ts';
 let device: string|undefined;
 let samplerate: string|undefined;
 let port: number | undefined;
-
-
-
-
+let useFart = true;
 
 
 
@@ -23,6 +20,10 @@ function printUsage() {
     console.log();
     console.log('  --language en | fr');
     console.log('           Sets the language: en=English, fr=French (default = English)');
+    console.log();
+    console.log('  --no-recognition');
+    console.log('           Runs without the speech recognition. All commands must be sent via the web server.');
+    console.log('           Requires the --port option');
     console.log();
     console.log('  --port PORT');
     console.log('           If specified, starts a web server that listens to the given port and');
@@ -55,6 +56,11 @@ async function parseArguments(): Promise<string> {
             });
             await p.status();
             Deno.exit(0);
+        }
+
+        if (arg === '--no-recognition') {
+            useFart = false;
+            continue;
         }
 
         if (arg === '--port') {
@@ -101,13 +107,17 @@ async function parseArguments(): Promise<string> {
         Deno.exit(1);
     }
 
+    if (!useFart && port === undefined) {
+        console.error('Must specify a port to start a server when using --no-recognition');
+        Deno.exit(1);
+    }
     return configFile;
 }
 
 
 const configFile = await parseArguments();
 const language = await Language.load(configFile);
-const finnegan = new Finnegan(language, device, samplerate);
+const finnegan = new Finnegan(language, useFart, device, samplerate);
 if (port !== undefined) {
     new Server(port, finnegan);
 }
