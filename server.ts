@@ -31,8 +31,10 @@ export class Server {
                     headers,
                     body: html
                 });
-            } else if (request.method === 'GET' && request.url === '/dartboard.svg') {
-                const svg = await Deno.readTextFile('dartboard.svg');
+            } else if (request.method === 'GET' && (request.url === '/dartboard.svg'
+                       || request.url === '/microphone-on.svg'
+                       || request.url === '/microphone-off.svg')) {
+                const svg = await Deno.readTextFile(request.url.substring(1));
                 const headers = new Headers();
                 headers.append('Content-Type', 'image/svg+xml');
                 request.respond({

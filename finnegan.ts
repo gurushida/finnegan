@@ -11,6 +11,9 @@ import { GameEngineAroundTheClock } from './aroundTheClock.ts';
  */
 interface FinneganState {
 
+    // true if speech recognition is active; false otherwise
+    listening: boolean;
+
     // The current selected game if we are on the home screen;
     // the name of the game running otherwise
     gameName: GameName;
@@ -48,12 +51,13 @@ export class Finnegan {
     lastPartOfSpeech?: LastPartOfSpeech;
 
 
-    constructor(private language: Language, private useFart: boolean, private device: string|undefined, private samplerate: string|undefined) {
+    constructor(private language: Language, private listening: boolean, private device: string|undefined, private samplerate: string|undefined) {
         this.onLanguageUpdated();
     }
 
     public getState(): FinneganState {
         return {
+            listening: this.listening,
             gameName: this.gameName,
             possibleThingsToSay: this.possibleThingsToSay,
             alternativeLanguages: this.language.getAlternativeLanguages(),
@@ -86,6 +90,18 @@ export class Finnegan {
             const configFile = cmd.substring(SWITCH_LANGUAGE_COMMAND_PREFIX.length);
             this.language = await Language.load(configFile);
             this.onLanguageUpdated();
+            return;
+        }
+
+        if (cmd === 'MIC_ON') {
+            this.listening = true;
+            this.startFart(this.language.configFile);
+            return;
+        }
+
+        if (cmd === 'MIC_OFF') {
+            this.listening = false;
+            this.stopFart();
             return;
         }
 
@@ -136,7 +152,6 @@ export class Finnegan {
             case 'WAITING_STOP_GAME_CONFIRMATION': this.messageForUser = this.language.msg('ARE_YOU_SURE_YOU_TO_STOP_THE_GAME'); break;
             case 'GAME_ENDED': {
                 if (this.gameEngine.winner !== undefined) {
-                    const winner = this.gameEngine.playerStatuses[this.gameEngine.winner].description;
                     this.messageForUser = this.gameEngine.getGameOverMessage(this.language);
                 }
                 break;
@@ -145,10 +160,17 @@ export class Finnegan {
     }
 
 
-    private async startFart(configFile: string) {
+    private stopFart() {
         if (this.fartProcess) {
             this.fartProcess.kill(9);
+            this.fartProcess = undefined;
         }
+    }
+
+
+    private async startFart(configFile: string) {
+        this.stopFart();
+
         const fartArgs = ['python3', '-u', 'fart.py', configFile];
 
         if (this.device) {
@@ -272,8 +294,10 @@ export class Finnegan {
 
 
     public onLanguageUpdated() {
-        if (this.useFart) {
+        if (this.listening) {
             this.startFart(this.language.configFile);
+        } else {
+            this.stopFart();
         }
         this.updatePlayerNames();
         this.updateMessageForUser();

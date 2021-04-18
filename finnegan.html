@@ -110,6 +110,8 @@
       color: white;
       width: fit-content;
       cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
     }
 
     .selectedActionButton {
@@ -120,6 +122,8 @@
       color: white;
       width: fit-content;
       cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
     }
 
     .languageButton {
@@ -130,6 +134,18 @@
       color: white;
       width: fit-content;
       cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .microphoneButton {
+      padding: 00px;
+      background-color: rgb(105 31 31);
+      height: 62px;
+      width: 62px;
+      cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
     }
 
     .alert {
@@ -146,12 +162,12 @@
   <script>
 
     function render(state) {
+      renderMessage(state);
       renderGameSelection(state);
       renderPreStartConfig(state);
       renderScores(state);
       renderTextToSay(state);
-      renderUnrecognizedText(state);
-      renderMessage(state);
+      renderLastPartOfSpeech(state);
     }
 
     function escapeHtml(unsafe) {
@@ -239,7 +255,7 @@
     }
 
 
-    function renderUnrecognizedText(state) {
+    function renderLastPartOfSpeech(state) {
       const root = document.getElementById('unrecognizedTextRoot');
       let html = '';
       html += `<div class="alert">`;
@@ -354,6 +370,7 @@
       }
       html += `</table>`;
       html += `<br/>`;
+      html += `<div>`;
       for (const command of commandButtons) {
         if (c = hasCommand(state, command)) {
           html += `<button class='actionButton' onclick="postCommand('${command}')">${c.textToSay}</button>`;
@@ -362,6 +379,12 @@
       for (const lang of state.alternativeLanguages ?? []) {
         html += `<button class='languageButton' onclick="postCommand('${lang.command}')">${lang.textToSay}</button>`;
       }
+      if (state.listening) {
+        html += `<button class='microphoneButton' onclick="postCommand('MIC_OFF')"><img style="margin:0; padding:0; height: 30px; width: 31px; object-fit: contain" src='./microphone-on.svg'></button>`;
+      } else {
+        html += `<button class='microphoneButton' onclick="postCommand('MIC_ON')"><img style="margin:0; padding:0; height: 30px; width: 31px; object-fit: contain" src='./microphone-off.svg'></button>`;
+      }
+      html += `</div>`;
       textRoot.innerHTML = html;
     }
 

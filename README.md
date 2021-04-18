@@ -202,3 +202,6 @@ types defined in `types.ts`.
 
 ## Credits
 * https://alphacephei.com/vosk/: the awesome library that provides the engine for doing voice recognition
+* https://freesvg.org/vector-illustration-of-dartboard
+* https://commons.wikimedia.org/wiki/File:Font_Awesome_5_solid_microphone-slash.svg
+* https://commons.wikimedia.org/wiki/File:Font_Awesome_5_solid_microphone.svg
