@@ -4,6 +4,7 @@ import { GameName, gameNames, isVoiceCommand, LastPartOfSpeech, PossibleCommand,
 import { readLines } from 'std/io/bufio.ts';
 import { GameEngine501 } from './501.ts';
 import { GameEngineAroundTheClock } from './aroundTheClock.ts';
+import { GameEnginePursuit } from './pursuit.ts';
 
 
 /**
@@ -115,11 +116,15 @@ export class Finnegan {
                 this.gameName = '501';
             } else if (cmd === 'AROUND_THE_CLOCK') {
                 this.gameName = 'AROUND_THE_CLOCK';
+            } else if (cmd === 'PURSUIT') {
+                this.gameName = 'PURSUIT';
             } else if (cmd === 'NEW_GAME') {
                 if (this.gameName === '501') {
                     this.gameEngine = new GameEngine501();
                 } else if (this.gameName === 'AROUND_THE_CLOCK') {
                     this.gameEngine = new GameEngineAroundTheClock();
+                } else if (this.gameName === 'PURSUIT') {
+                    this.gameEngine = new GameEnginePursuit();
                 }
             }
             this.updatePlayerNames();
@@ -210,7 +215,7 @@ export class Finnegan {
     private updatePossibleThingsToSay() {
         const possibleCommands: PossibleCommand[] = this.gameEngine
             ? this.gameEngine.getPossibleCommands()
-            : ['NEW_GAME', '501', 'AROUND_THE_CLOCK'];
+            : ['NEW_GAME', '501', 'AROUND_THE_CLOCK', 'PURSUIT'];
         this.possibleThingsToSay = [];
         for (const command of possibleCommands) {
             this.possibleThingsToSay.push({

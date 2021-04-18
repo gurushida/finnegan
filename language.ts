@@ -118,6 +118,8 @@ export class Language {
         switch (cmd) {
             case '501': return this.msg('501');
             case 'AROUND_THE_CLOCK': return this.msg('AROUND_THE_CLOCK');
+            case 'PURSUIT': return this.msg('PURSUIT');
+
             case 'NEW_GAME': return this.msg('NEW_GAME');
     
             case 'SET_DIFFICULTY_EXPERT': return this.msg('EXPERT_LEVEL');

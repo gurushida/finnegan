@@ -1,4 +1,4 @@
-export const gameNames = ['501', 'AROUND_THE_CLOCK'] as const;
+export const gameNames = ['501', 'AROUND_THE_CLOCK', 'PURSUIT'] as const;
 export type GameName = typeof gameNames[number];
 
 /**
@@ -47,6 +47,10 @@ export const messageIDs = [
     'YES',
     'NO',
     'NEEDS_TO_HIT',
+    'HARE',
+    'HOUND',
+    'THE_HARE_WON',
+    'THE_HARE_LOST',
 ] as const;
 export type MessageId = typeof messageIDs[number];
 
@@ -64,6 +68,7 @@ export const SWITCH_LANGUAGE_COMMAND_PREFIX = "LOAD_CONFIG:"
 export const voiceCommands = [
     '501',
     'AROUND_THE_CLOCK',
+    'PURSUIT',
     'NEW_GAME',
     'STOP_GAME',
     'PAUSE_GAME',
@@ -320,3 +325,4 @@ export function isCommandMsg(obj: any): obj is CommandMsg {
 }
 
 
+export const CLOCKWISE_NUMBERS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];

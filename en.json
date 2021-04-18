@@ -43,7 +43,12 @@
         "501": "501",
         "AROUND_THE_CLOCK": "Around the clock",
         "BACK": "Back",
-        "NEEDS_TO_HIT": "needs to hit"
+        "NEEDS_TO_HIT": "needs to hit",
+        "PURSUIT": "Pursuit",
+        "HARE": "hare",
+        "HOUND": "hound",
+        "THE_HARE_WON": "The hare won !",
+        "THE_HARE_LOST": "The hare lost !"
     },
     "alternativeLanguageDescriptions": {
         "LOAD_CONFIG:fr.json": "Play in French"
@@ -100,11 +105,13 @@
 
 
         "501": ["501", "five or one", "fiber one", "five hundred and one", "five a one", "five who one", "taiwan", "hi ho one"],
-        "AROUND_THE_CLOCK": ["around the clock", "round the clock", "run the clock"]
+        "AROUND_THE_CLOCK": ["around the clock", "round the clock", "run the clock"],
+        "PURSUIT": ["pursuit", "pursuits", "a suit", "the suit", "that's it"]
     },
     "patterns": {
         "501": ["501"],
         "AROUND_THE_CLOCK": ["AROUND_THE_CLOCK"],
+        "PURSUIT": ["PURSUIT"],
         "NEW_GAME": ["NEW GAME"],
         "STOP_GAME": ["STOP GAME"],
         "PAUSE_GAME": ["PAUSE GAME"],
