@@ -3,6 +3,8 @@
     "//         ": "Run it with: 'python3 fart.py vegetables_en.json'",
 
     "vosk_model_path": "vosk-model-small-en-us-0.15",
+    "prefixMatch": "CMD:",
+    "prefixOther": "???:",
 
     "//1 comment": "Lists here the tokens you want to recognize. For each token,",
     "//2        ": "you specify an array of strings where each string is a way",

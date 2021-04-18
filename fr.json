@@ -47,6 +47,8 @@
         "LOAD_CONFIG:en.json": "Jouer en anglais"
     },
     "vosk_model_path": "vosk-model-small-fr-pguyot-0.3",
+    "prefixMatch": "CMD:",
+    "prefixOther": "???:",
     "tokens": {
         "ANGLAIS": ["anglais", "franglais"],
         "NOUVELLE": ["nouvelle", "nouvel", "nouvelles"],

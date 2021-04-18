@@ -1,5 +1,7 @@
 {
     "vosk_model_path": "vosk-model-small-en-us-0.15",
+    "prefixMatch": "",
+    "prefixOther": "",
     "tokens": {},
     "patterns": {}
 }

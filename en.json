@@ -48,6 +48,8 @@
         "LOAD_CONFIG:fr.json": "Play in French"
     },
     "vosk_model_path": "vosk-model-small-en-us-0.15",
+    "prefixMatch": "CMD:",
+    "prefixOther": "???:",
     "tokens": {
         "FRENCH": ["french", "trench"],
         "NEW": ["new", "near", "you", "your"],

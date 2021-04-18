@@ -277,6 +277,12 @@ export interface FartConfig {
     // The path to the vosk data model directory to use
     "vosk_model_path": string;
 
+    // The prefix to print before matched patterns
+    prefixMatch: string;
+
+    // The prefix to print before unrecognized text
+    prefixOther: string;
+
     // Associates to each symbolic token to recognize the list of strings
     // that will be accepted from the output of the speech recognition process
     tokens: Record<string, string[]>;

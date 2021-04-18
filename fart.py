@@ -198,6 +198,13 @@ with open(configFile, 'r') as myfile:
 config = json.loads(data)
 tokenData = prepareData(config['tokens'])
 patternData = prepareData(config['patterns'])
+if config['prefixOther'] is None:
+    print('Missing prefixOther property in %s' % configFile)
+    exit(1)
+
+if config['prefixMatch'] is None:
+    print('Missing prefixMatch property in %s' % configFile)
+    exit(1)
 
 if samplerate is None:
     device_info = sd.query_devices(device, 'input')
@@ -218,8 +225,8 @@ with sd.RawInputStream(samplerate=samplerate, blocksize = 8000, device=device, d
             if len(text) > 0:
                 patterns = tryToParsePatterns(text, tokenData, patternData)
                 if patterns is None:
-                    print('???:%s' % text)
+                    print('%s%s' % (config['prefixOther'], text))
                 else:
                     for pattern in patterns:
-                        print('CMD:%s' % pattern)
+                        print('%s%s' % (config['prefixMatch'], pattern))
 

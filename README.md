@@ -1,7 +1,7 @@
 # finnegan
 
 ## What is it ?
-This is a console application that is a voice-controlled dart scoring system for the 501 dart game.
+This is a voice-controlled dart scoring system.
 You talk out loud to the program and it keeps track of the score for you ! And it is completely offline:
 no data transmitted anywhere for processing !
 
@@ -115,17 +115,21 @@ You can also have a look at the `search_with_your_voice.sh` script that does not
 use any matching rules and works directly on the raw text output from the speech
 recognition tool.
 
-The patterns matched by the tool are emitted on the standard output with a `CMD:` prefix, and the
-unrecognized speech sequences are emitted with a `???:` prefix.
+Both the unrecognized speech sequences and the patterns matched by the tool are emitted
+on the standard output with a prefix specified in the configuration file.
 
 ## The scoring part
 
 The typescript program `finnegan.ts` is the actual scoring system. It reads the output of
 `fart.py` to fetch the commands and manages the scores.
 
-And if you want to render the game state yourself, you can run the program with `--port <PORT>`
-to start a web server that will respond with a json representation of the full game state
-when doing a GET request on `http://localhost:<PORT>/state`
+It prints on the console but you can use a fancier web interface if you can run the program
+with `--port <PORT>` to start a web server and then `http://localhost:<PORT>/` in a web
+browser.
+
+And if you want to render it yourself, you can get the game state at any time by doing
+a GET request on `http://localhost:<PORT>/state` that will respond with a json representation
+of the full game state.
 
 For example, if you start the program with `./finnegan --port 5000 501_en.json` and then
 do `curl http://localhost:5000/state`, you will get something like this:
