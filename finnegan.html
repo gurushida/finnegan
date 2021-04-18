@@ -369,8 +369,8 @@
     function renderScores(state) {
       const scoreBoardRoot = document.getElementById('scoreBoardRoot');
       scoreBoardRoot.innerHTML = '';
-      if (state.gameName === '501') {
-        scoreBoardRoot.innerHTML = renderScores501(state.gameEngineState);
+      if (state.gameName === '501' || state.gameName === 'AROUND_THE_CLOCK') {
+        scoreBoardRoot.innerHTML = getScoreTableHtml(state.gameName, state.gameEngineState);
       }
 
       // In case there is not enough room to display all turns,
@@ -379,7 +379,7 @@
     }
 
 
-    function renderScores501(gameEngineState) {
+    function getScoreTableHtml(gameName, gameEngineState) {
       if (!gameEngineState || !gameEngineState.playerStatuses || gameEngineState.playerStatuses.length === 0) {
         return '';
       }
@@ -406,7 +406,14 @@
         } else {
           html += `<td class="player">&nbsp;&nbsp;${gameEngineState.playerStatuses[p].description}&nbsp;&nbsp;</td>`;
         }
-        html += `<td class="score">${status.score}&nbsp;&nbsp;</td>`;
+        if (gameName === '501') {
+          html += `<td class="score">${status.score}&nbsp;&nbsp;</td>`;
+        } else if (gameName === 'AROUND_THE_CLOCK') {
+          html += `<td class="score">&#9656;${status.targetToHit}&nbsp;&nbsp;</td>`;
+        } else {
+          throw `Unsupported game: ${gameName}`;
+        }
+
         for (let turn = 0; turn <= N_TURNS; turn++) {
           for (let dart = 0; dart < 3; dart++) {
             const darts = status.dartsPlayed[turn] ?? [];

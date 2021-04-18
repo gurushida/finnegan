@@ -276,6 +276,7 @@ export class Finnegan {
             this.startFart(this.language.configFile);
         }
         this.updatePlayerNames();
+        this.updateMessageForUser();
 
         // When switching language, there is no point in showing the last piece
         // of text from the previous language
