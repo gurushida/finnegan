@@ -29,14 +29,21 @@ export class Server {
                 } else {
                     file = request.url.substring(1);
                 }
-                const html = await Deno.readTextFile(file);
-                const headers = new Headers();
-                headers.append('Content-Type', 'text/html');
-                request.respond({
-                    status: 200,
-                    headers,
-                    body: html
-                });
+                try {
+                    const html = await Deno.readTextFile(file);
+                    const headers = new Headers();
+                    headers.append('Content-Type', 'text/html');
+                    request.respond({
+                        status: 200,
+                        headers,
+                        body: html
+                    });
+                } catch (e) {
+                    request.respond({
+                        status: 404,
+                        body: `Not found: ${file} ${e}`
+                    });
+                }
             } else if (request.method === 'GET' && (request.url === '/dartboard.svg'
                        || request.url === '/microphone-on.svg'
                        || request.url === '/microphone-off.svg')) {
