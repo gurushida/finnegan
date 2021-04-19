@@ -22,8 +22,14 @@ export class Server {
                     body: JSON.stringify(this.finnegan.getState(), null, 2)
                 });
             } else if (request.method === 'GET' &&
-                (request.url === '' || request.url === '/' || request.url === '/finnegan.html')) {
-                const html = await Deno.readTextFile('finnegan.html');
+                (request.url === '' || request.url === '/' || request.url.endsWith('.html'))) {
+                let file: string;
+                if (request.url === '' || request.url === '/') {
+                    file = 'finnegan.html';
+                } else {
+                    file = request.url.substring(1);
+                }
+                const html = await Deno.readTextFile(file);
                 const headers = new Headers();
                 headers.append('Content-Type', 'text/html');
                 request.respond({
