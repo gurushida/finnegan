@@ -131,5 +131,4 @@ dmypy.json
 vosk-model-small-en-us-0.15/
 vosk-model-small-fr-pguyot-0.3/
 .DS_Store
-finnegan
 node_modules/

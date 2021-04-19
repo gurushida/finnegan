@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# --quiet  is to avoid seeing check messages emitted by deno when it runs
+#          things for the first time
+#
+# --import-map import_map.json  is to tell deno where to find the translations
+#                               for the shortened import definitions like:
+#
+#                                   import { serve } from 'std/http/server.ts';
+# 
+#
+# deno explicits permissions for some operations:
+#
+# --allow-read is for reading the configuration file
+# --allow-run is to start the speech recognition process
+# --unstable is for using kill() to stop the recognition process
+# --allow-net is for starting the web server if the --port option is used
+
+deno run  --quiet --import-map import_map.json --allow-read --allow-run --unstable --allow-net main.ts $*
