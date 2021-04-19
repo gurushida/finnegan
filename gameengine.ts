@@ -334,7 +334,7 @@ export abstract class GameEngine<PS extends PlayerStatus> {
             case 'WAITING_STOP_GAME_CONFIRMATION': {
                 if (event.type === 'ANSWER') {
                     if (event.answer === Answer.YES) {
-                        this.gameOver(undefined);
+                        this.state = 'BACK_TO_HOME_SCREEN';
                     } else {
                         this.state = 'PLAYING';
                     }
