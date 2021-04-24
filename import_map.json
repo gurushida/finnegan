@@ -1,5 +1,6 @@
 {
     "imports": {
-       "std/": "https://deno.land/std@0.93.0/"
+       "std/": "https://deno.land/std@0.92.0/",
+       "websocket/": "https://deno.land/x/websocket@v0.1.1/"
     }
  }

@@ -161,6 +161,11 @@
 
   <script>
 
+    const finnegan = {
+      state: undefined,
+      websocket: undefined,
+    };
+
     function render(state) {
       renderMessage(state);
       renderGameSelection(state);
@@ -539,6 +544,7 @@
       fetch('/state')
         .then(res => res.json())
         .then((gameState) => {
+          finnegan.state = gameState;
           render(gameState);
         }).catch(err => { throw err });
     }
@@ -556,9 +562,36 @@
       xhr.send(data);
     }
 
+
+    function connectWebSocket() {
+      if (finnegan.websocket !== undefined || finnegan.state === undefined || finnegan.state.wsUrl === undefined) {
+        return;
+      }
+
+      finnegan.websocket = new WebSocket(finnegan.state.wsUrl);
+      finnegan.websocket.onopen = function(event) {
+        pollGameState();
+      };
+      finnegan.websocket.onerror = function(event) {
+        console.log(`ws error: ${JSON.stringify(event)}`);
+      };
+      finnegan.websocket.onclose = function(event) {
+        finnegan.websocket = undefined;
+      };
+      finnegan.websocket.onmessage = function(event) {
+        const state = event.data;
+        finnegan.state = JSON.parse(event.data);
+        render(finnegan.state);
+      };
+    }
+
+
     pollGameState();
-    // Let's poll for updates every second
-    setInterval(() => pollGameState(), 1000);
+    connectWebSocket();
+
+    // The websocket will drive the updates, so let's check that it's alive
+    // every second
+    setInterval(() => connectWebSocket(), 1000);
   </script>
 </head>
 

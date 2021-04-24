@@ -1,25 +1,58 @@
 import { serve } from 'std/http/server.ts';
 import { readAll } from 'std/io/util.ts';
+import { WebSocketClient, WebSocketServer } from 'websocket/mod.ts';
 import { Finnegan } from './finnegan.ts';
 import { isCommandMsg } from './types.ts';
 
-export class Server {
+export class FinneganServer {
 
-    constructor(port: number, private finnegan: Finnegan) {
-        void this.startServer(port);
+    private wsUrl: string;
+    private websockets: WebSocketClient[] = [];
+
+    constructor(httpPort: number, wsPort: number, private finnegan: Finnegan) {
+        this.wsUrl = `ws://0.0.0.0:${wsPort}`;
+        void this.startServer(httpPort);
+        void this.startWsServer(wsPort);
+        finnegan.addEventListener(() => this.sendWsMessage(JSON.stringify(this.getState(), null, 2)));
     }
 
+
+    private startWsServer(port: number) {
+        const wss = new WebSocketServer(port);
+        wss.on("connection", (ws: WebSocketClient) => {
+            this.websockets.push(ws);
+        });
+    }
+
+
+    private sendWsMessage(msg: string) {
+        const alive: WebSocketClient[] = []
+        for (const ws of this.websockets) {
+            if (!ws.isClosed) {
+                alive.push(ws);
+                ws.send(msg);
+            }
+        }
+        this.websockets = alive;
+    }
+
+
+    private getState() {
+        return { ...this.finnegan.getState(), wsUrl: this.wsUrl };
+    }
+
+
     private async startServer(port: number) {
-        const server = serve({ hostname: "0.0.0.0", port });
-    
-        for await (const request of server) {
+        const httpServer = serve({ hostname: "0.0.0.0", port });
+
+        for await (const request of httpServer) {
             if (request.method === 'GET' && request.url === '/state') {
                 const headers = new Headers();
                 headers.append('Content-Type', 'application/json');
                 request.respond({
                     status: 200,
                     headers,
-                    body: JSON.stringify(this.finnegan.getState(), null, 2)
+                    body: JSON.stringify(this.getState(), null, 2)
                 });
             } else if (request.method === 'GET' &&
                 (request.url === '' || request.url === '/' || request.url.endsWith('.html'))) {

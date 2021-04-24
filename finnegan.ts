@@ -42,6 +42,8 @@ interface FinneganState {
 
 export class Finnegan {
 
+    private listeners: (() => void)[] = [];
+
     private fartProcess: Deno.Process | undefined;
     private selectedGame: GameCommand = '501';
 
@@ -211,6 +213,9 @@ export class Finnegan {
     private refresh() {
         this.updatePossibleThingsToSay();
         this.render();
+        for (const listener of this.listeners) {
+            listener();
+        }
     }
 
 
@@ -322,4 +327,7 @@ export class Finnegan {
         this.refresh();
     }
 
+    public addEventListener(listener: () => void) {
+        this.listeners.push(listener);
+    }
 }

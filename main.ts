@@ -1,14 +1,15 @@
 import { Language } from './language.ts';
-import { Server } from './server.ts';
+import { FinneganServer } from './server.ts';
 import { Finnegan } from './finnegan.ts';
 
-
-const DEFAULT_PORT = 50301;
+const DEFAULT_HTTP_PORT = 50301;
+const DEFAULT_WS_PORT = 50302;
 
 
 let device: string|undefined;
 let samplerate: string|undefined;
-let port: number | undefined = DEFAULT_PORT;
+let httpPort: number | undefined = DEFAULT_HTTP_PORT;
+let wsPort: number | undefined = DEFAULT_WS_PORT;
 let useFart = true;
 
 
@@ -17,8 +18,9 @@ function printUsage() {
     console.log('Usage: finnegan [OPTIONS] <config>');
     console.log();
     console.log('Starts the game engine that begins to listen for voice commands, using the given json configuration file.');
-    console.log(`Also starts a web server on port ${DEFAULT_PORT} to serve the game state and a web UI and also to receive`);
+    console.log(`Starts a web server on port ${DEFAULT_HTTP_PORT} to serve the game state and a web UI and also to receive`);
     console.log('game commands via POST requests.');
+    console.log(`Starts a websocket server on port ${DEFAULT_WS_PORT} to notify clients when to refresh.`);
     console.log();
     console.log('OPTIONS:');
     console.log('  --list-devices   Runs "python3 fart.py -l" to show the available audio devices');
@@ -30,9 +32,12 @@ function printUsage() {
     console.log('           Runs without the speech recognition. All commands must be sent via the web server.');
     console.log('           Requires the web server to run');
     console.log();
-    console.log('  --port PORT');
-    console.log(`           Specifies the port to use for the web server instead of the default ${DEFAULT_PORT}.`);
-    console.log('           Use "--port none" to disable the web server');
+    console.log('  --httpPort PORT');
+    console.log(`           Specifies the port to use for the web server instead of the default ${DEFAULT_HTTP_PORT}.`);
+    console.log('           Use "--httpPort none" to disable the web server');
+    console.log();
+    console.log('  --wsPort PORT');
+    console.log(`           Specifies the port to use for the websocket server instead of the default ${DEFAULT_WS_PORT}.`);
     console.log();
     console.log('  --device D');
     console.log('           Specifies the audio device parameter to be passed to fart.py');
@@ -68,18 +73,32 @@ async function parseArguments(): Promise<string> {
             continue;
         }
 
-        if (arg === '--port') {
+        if (arg === '--httpPort') {
             if (i === args.length) {
                 console.error(`Missing ${arg} argument`);
                 Deno.exit(1);
             }
             const argValue = args[i++];
             if (argValue === 'none') {
-                port = undefined;
+                httpPort = undefined;
                 continue;
             }
-            port = parseInt(argValue);
-            if (isNaN(port) || port < 1024 || port > 65635) {
+            httpPort = parseInt(argValue);
+            if (isNaN(httpPort) || httpPort < 1024 || httpPort > 65635) {
+                console.error(`Invalid ${arg} argument: ${argValue}`);
+                Deno.exit(1);
+            }
+            continue;
+        }
+
+        if (arg === '--wsPort') {
+            if (i === args.length) {
+                console.error(`Missing ${arg} argument`);
+                Deno.exit(1);
+            }
+            const argValue = args[i++];
+            wsPort = parseInt(argValue);
+            if (isNaN(wsPort) || wsPort < 1024 || wsPort > 65635) {
                 console.error(`Invalid ${arg} argument: ${argValue}`);
                 Deno.exit(1);
             }
@@ -116,8 +135,8 @@ async function parseArguments(): Promise<string> {
         Deno.exit(1);
     }
 
-    if (!useFart && port === undefined) {
-        console.error('Must specify a port to start a server when using --no-recognition');
+    if (!useFart && httpPort === undefined) {
+        console.error('Must specify a httpPort to start a server when using --no-recognition');
         Deno.exit(1);
     }
     return configFile;
@@ -127,6 +146,6 @@ async function parseArguments(): Promise<string> {
 const configFile = await parseArguments();
 const language = await Language.load(configFile);
 const finnegan = new Finnegan(language, useFart, device, samplerate);
-if (port !== undefined) {
-    new Server(port, finnegan);
+if (httpPort !== undefined) {
+    new FinneganServer(httpPort, wsPort, finnegan);
 }
