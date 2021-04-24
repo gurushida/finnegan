@@ -4,6 +4,9 @@ import { WebSocketClient, WebSocketServer } from 'websocket/mod.ts';
 import { Finnegan } from './finnegan.ts';
 import { isCommandMsg } from './types.ts';
 
+export const DEFAULT_HTTP_PORT = 50301;
+export const DEFAULT_WS_PORT = 50302;
+
 export class FinneganServer {
 
     private wsUrl: string;

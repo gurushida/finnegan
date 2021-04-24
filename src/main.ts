@@ -1,10 +1,6 @@
 import { Language } from './language.ts';
-import { FinneganServer } from './server.ts';
+import { DEFAULT_HTTP_PORT, DEFAULT_WS_PORT, FinneganServer } from './server.ts';
 import { Finnegan } from './finnegan.ts';
-
-const DEFAULT_HTTP_PORT = 50301;
-const DEFAULT_WS_PORT = 50302;
-
 
 let device: string|undefined;
 let samplerate: string|undefined;
