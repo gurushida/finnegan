@@ -158,13 +158,6 @@ export const voiceCommands = [
 ] as const;
 export type VoiceCommand = typeof voiceCommands[number];
 
-/**
- * In each game state, we want to describe the possible commands.
- * Since there are many score commands, we use '<score>' as a special
- * symbol indicating that any score command is accepted.
- */
-export type PossibleCommand = VoiceCommand | '<score>';
-
 export type Difficulty = 'expert' | 'medium' | 'easy';
 
 export enum Answer {
@@ -248,9 +241,7 @@ export interface PossibleThingToSay {
     // The command symbol
     command: string;
 
-    // The text to actually say to trigger it like "start game"
-    // or <score> if the command can be triggered by any score
-    // report like "double seven" or "triple ten"
+    // The text to actually say to trigger it like "next" or "double seven"
     textToSay: string;
 
     // A description of what the command will do if triggered

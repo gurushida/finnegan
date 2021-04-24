@@ -1,5 +1,5 @@
 import { voiceCommands, PossibleThingToSay, MessageId,
-    SWITCH_LANGUAGE_COMMAND_PREFIX, messageIDs, VoiceCommand, FinneganConfig, PossibleCommand } from './types.ts';
+    SWITCH_LANGUAGE_COMMAND_PREFIX, messageIDs, VoiceCommand, FinneganConfig } from './types.ts';
 
 export class Language {
 
@@ -108,13 +108,12 @@ export class Language {
     }
 
 
-    public getVocalCommand(cmd: PossibleCommand): string {
-        if (cmd === '<score>') return cmd;
+    public getVocalCommand(cmd: VoiceCommand): string {
         return `${this.voiceCommand2Text[cmd] as string}`;
     }
 
 
-    public getCommandDescription(cmd: PossibleCommand): string {
+    public getCommandDescription(cmd: VoiceCommand): string {
         switch (cmd) {
             case '501': return this.msg('501');
             case 'AROUND_THE_CLOCK': return this.msg('AROUND_THE_CLOCK');
@@ -147,7 +146,6 @@ export class Language {
             case 'CORRECTION': return this.msg('CORRECTION');
             case 'NEXT_TURN': return this.msg('NEXT_TURN');
             case 'BACK': return this.msg('BACK');
-            case '<score>': return this.msg('SCORE');
             default: {
                 if (cmd.startsWith('SCORE_')) {
                     return this.msg('SCORE');

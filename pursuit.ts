@@ -1,4 +1,4 @@
-import { DartPlayed, DartBaseValue, DartMultiplier, DartStatus, CLOCKWISE_NUMBERS, PossibleCommand, GameEvent, VoiceCommand } from './types.ts';
+import { DartPlayed, DartBaseValue, DartMultiplier, DartStatus, CLOCKWISE_NUMBERS, GameEvent, VoiceCommand } from './types.ts';
 import { PlayerStatus, GameEngine, lastNumberOfPlayers } from './gameengine.ts';
 import { Language } from './language.ts';
 import { isIgnored, getDartDescription } from './utils.ts';
@@ -129,7 +129,7 @@ export class GameEnginePursuit extends GameEngine<PlayerStatusPursuit> {
     /**
      * Enforces a minimum of 2 players
      */
-    getPossibleCommands(): PossibleCommand[] {
+    getVoiceCommands(): VoiceCommand[] {
         if (this.state === 'WAITING_FOR_START'){
             return [
                 'START_GAME',
@@ -144,7 +144,7 @@ export class GameEnginePursuit extends GameEngine<PlayerStatusPursuit> {
                 'SET_PLAYER_COUNT_10'
             ];
         }
-        return super.getPossibleCommands();
+        return super.getVoiceCommands();
     }
 
 

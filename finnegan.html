@@ -339,6 +339,16 @@
     }
 
 
+    function hasScoreCommand(state) {
+      for (let command of state.possibleThingsToSay ?? []) {
+        if (command.command.startsWith('SCORE_')) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+
     function getPointClass(legalMoves, command) {
       return legalMoves[command] ? ' class="good"' : ' class="bad"';
     }
@@ -350,7 +360,8 @@
       let c;
       const commandButtons = ['NEW_GAME', 'START_GAME', 'ANSWER_YES', 'ANSWER_NO',
         'CORRECTION', 'NEXT_TURN', 'PAUSE_GAME', 'CONTINUE_GAME', 'STOP_GAME', 'BACK'];
-      if (hasTextToSay(state, '<score>')) {
+
+      if (hasScoreCommand(state)) {
         const legalMoves = {};
         for (const command of state.possibleThingsToSay) {
           if (command.command.startsWith("SCORE_")) {
@@ -390,7 +401,6 @@
             || command.command.startsWith('SET_DIFFICULTY_')
             || command.command.startsWith('SET_PLAYER_COUNT_')
             || command.command.startsWith('SCORE_')
-            || command.textToSay === '<score>'
             || command.command === '501'
             || command.command === 'AROUND_THE_CLOCK'
             || command.command === 'PURSUIT') {

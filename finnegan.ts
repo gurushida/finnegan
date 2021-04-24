@@ -1,6 +1,6 @@
 import { GameEngine, PlayerStatus } from "./gameengine.ts";
 import { Language } from "./language.ts";
-import { GameName, gameNames, isVoiceCommand, LastPartOfSpeech, PossibleCommand, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX } from "./types.ts";
+import { GameName, gameNames, isVoiceCommand, LastPartOfSpeech, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX, VoiceCommand } from "./types.ts";
 import { readLines } from 'std/io/bufio.ts';
 import { GameEngine501 } from './501.ts';
 import { GameEngineAroundTheClock } from './aroundTheClock.ts';
@@ -206,8 +206,8 @@ export class Finnegan {
 
 
     private updatePossibleThingsToSay() {
-        const possibleCommands: PossibleCommand[] = this.gameEngine
-            ? this.gameEngine.getPossibleCommands()
+        const possibleCommands: VoiceCommand[] = this.gameEngine
+            ? this.gameEngine.getVoiceCommands()
             : ['NEW_GAME', '501', 'AROUND_THE_CLOCK', 'PURSUIT'];
         this.possibleThingsToSay = [];
         for (const command of possibleCommands) {
@@ -254,6 +254,8 @@ export class Finnegan {
 
 
     private printPossibleCommands() {
+        const hasScoreCommands = this.possibleThingsToSay.some(command => command.command.startsWith('SCORE_'));
+
         const thingsToSay = [...this.possibleThingsToSay, ...this.language.getAlternativeLanguages()]
           .filter(command => !command.command.startsWith('SCORE_'));
         const maxLen = Math.max(...thingsToSay.map(p => p.textToSay.length));
@@ -265,6 +267,10 @@ export class Finnegan {
             }
             commandLines.push(`${command.textToSay.padEnd(maxLen)}     ${command.description}`);
         }
+        if (hasScoreCommands) {
+            commandLines.push(`${''.padEnd(maxLen)}     ${this.language.msg('SCORE')}`);
+        }
+
         commandLines.push('');
         for (const altLang of this.language.getAlternativeLanguages()) {
             commandLines.push(`${altLang.textToSay.padEnd(maxLen)}     ${altLang.description}`);

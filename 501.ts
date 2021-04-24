@@ -1,5 +1,5 @@
 import { DartPlayed, Difficulty,
-  GameEvent, VoiceCommand, DartBaseValue, DartMultiplier, DartStatus, PossibleCommand } from './types.ts';
+  GameEvent, VoiceCommand, DartBaseValue, DartMultiplier, DartStatus } from './types.ts';
 import { PlayerStatus, GameEngine, lastNumberOfPlayers } from './gameengine.ts';
 import { Language } from './language.ts';
 import { isIgnored, getDartDescription } from './utils.ts';
@@ -121,8 +121,8 @@ export class GameEngine501 extends GameEngine<PlayerStatus501> {
     }
 
 
-    getPossibleCommands(): PossibleCommand[] {
-        const commands = super.getPossibleCommands();
+    getVoiceCommands(): VoiceCommand[] {
+        const commands = super.getVoiceCommands();
         if (this.state === 'WAITING_FOR_START') commands.push(
             'SET_DIFFICULTY_EXPERT',
             'SET_DIFFICULTY_MEDIUM',

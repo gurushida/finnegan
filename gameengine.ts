@@ -1,6 +1,6 @@
 import { Language } from './language.ts';
 import { VoiceCommand, DartBaseValue, DartStatus, DartMultiplier,
-    Answer, GameEvent, GameName, DartPlayed, State, PossibleCommand } from "./types.ts";
+    Answer, GameEvent, GameName, DartPlayed, State } from "./types.ts";
 
 
 // Global number of players, since it is quite likely
@@ -53,12 +53,12 @@ export abstract class GameEngine<PS extends PlayerStatus> {
      * values that are too high.
      */
     public getLegalMoveCommands() {
-        const legalMoves: PossibleCommand[] = [];
+        const legalMoves: VoiceCommand[] = [];
 
         for (let multiplier = 1 ; multiplier <= 3 ; multiplier++) {
             for (let baseValue = 1 ; baseValue <= 20 ; baseValue++) {
                 if ('OK' === this.getDartPlayedStatus(multiplier as DartMultiplier, baseValue as DartBaseValue)) {
-                    legalMoves.push(`SCORE_${multiplier}x${baseValue}` as PossibleCommand);
+                    legalMoves.push(`SCORE_${multiplier}x${baseValue}` as VoiceCommand);
                 }
             }
         }
@@ -76,7 +76,7 @@ export abstract class GameEngine<PS extends PlayerStatus> {
      * Unless special case, the subclass should merge its own commands
      * with the new ones provided here.
      */
-    getPossibleCommands(): PossibleCommand[] {
+    getVoiceCommands(): VoiceCommand[] {
         switch (this.state) {
             case 'WAITING_FOR_START': return [
                 'START_GAME',
@@ -92,11 +92,10 @@ export abstract class GameEngine<PS extends PlayerStatus> {
                 'SET_PLAYER_COUNT_10'];
 
             case 'PLAYING': {
-                const cmds: PossibleCommand[] = ['PAUSE_GAME', 'STOP_GAME', 'CORRECTION'];
+                const cmds: VoiceCommand[] = ['PAUSE_GAME', 'STOP_GAME', 'CORRECTION'];
                 if (this.isTurnComplete()) {
                     cmds.push('NEXT_TURN');
                 } else {
-                    cmds.push('<score>');
                     cmds.push(...this.getLegalMoveCommands());
                 }
                 return cmds;
