@@ -5,101 +5,81 @@ This is a voice-controlled dart scoring system.
 You talk out loud to the program and it keeps track of the score for you ! And it is completely offline:
 no data transmitted anywhere for processing !
 
-Here is what it looks like when you start the program for English:
-```
-/-------------------------------------------------------\
-|  FINNEGAN - 501 DART VOICE CONTROLLED SCORING SYSTEM  |
-\-------------------------------------------------------/
+Here is what the UI looks like when you start the program for English:
 
+<br/>
+<img src="docimages/home.png" width="600"/>
+<br/>
+<br/>
 
-********************************************
-* Possible things to say:                  *
-*                                          *
-* "guinness new game"     Start a new game *
-* "guinness quit"         Quit the program *
-*                                          *
-* "guinness french"       Play in French   *
-********************************************
-```
+For each command, you can either click on a button or say out loud what is written on it. For
+instance, if you say "new game" on the home screen while "501" is selected (like in the previous screenshot),
+you can then configure the difficulty and number of players:
 
-If you say "guinness new game", you can then configure the difficulty and number of players:
-```
-/-------------------------------------------------------\
-|  FINNEGAN - 501 DART VOICE CONTROLLED SCORING SYSTEM  |
-\-------------------------------------------------------/
-
-Difficulty:          easy
-Number of players:   2
-
-**********************************************************************
-* Possible things to say:                                            *
-*                                                                    *
-* "guinness begin"      Start the game                               *
-* "expert"              Each player must start and end with a double *
-* "medium"              Each player must end with a double           *
-* "easy"                No restriction                               *
-* "one player"          1 player game                                *
-* "two players"         2 players game                               *
-* "three players"       3 players game                               *
-* "four players"        4 players game                               *
-* "five players"        5 players game                               *
-* "six players"         6 players game                               *
-* "seven players"       7 players game                               *
-* "eight players"       8 players game                               *
-* "nine players"        9 players game                               *
-* "ten players"         10 players game                              *
-* "guinness quit"       Quit the program                             *
-*                                                                    *
-* "guinness french"     Play in French                               *
-**********************************************************************
-```
+<br/>
+<img src="docimages/501config.png" width="600"/>
+<br/>
+<br/>
 
 Once you begin the game, you tell the program what each dart has scored like "three", "double eighteen" or "zero"
 if you missed the board and it keeps the score for you:
-```
-/-------------------------------------------------------\
-|  FINNEGAN - 501 DART VOICE CONTROLLED SCORING SYSTEM  |
-\-------------------------------------------------------/
 
-Difficulty: easy
-
- => Player 1: 430
-    Player 2: 501
-
-Dart 1: T17
-Dart 2:   0
-Dart 3: D10
-
-
-***********************************************************************************
-* Possible things to say:                                                         *
-*                                                                                 *
-* "guinness quit"           Quit the program                                      *
-* "guinness pause game"     Stop listening for commands until the game is resumed *
-* "guinness stop game"      Stop the game                                         *
-* "guinness correction"     Reset the current player's turn                       *
-* "guinness next"           Move on the next player's turn                        *
-*                                                                                 *
-* "guinness french"         Play in French                                        *
-***********************************************************************************
-```
-
+<br/>
+<img src="docimages/501game.png" width="600"/>
+<br/>
+<br/>
 
 ## Dependencies
 To run this application, you need `python3` >= 3.6, `pip3` >= 10, and [deno](https://deno.land/#installation) >= 1.9.
 On MacOS, you need to make sure the Terminal is allowed to access your microphone. 
 
+<br/>
+<br/>
 
 ## How to run it
 Run `./install_dependencies.sh ` to install the dependencies, i.e. the python modules and data models needed
 to run the speech recognition tool.
 
-Then run `./finnegan en.json` to start playing in English.
+Run `./finnegan en.json` to start the game engine in English.
 
+Now you can either open `http://localhost:50301` in a web browser to access the web UI or just use the console output
+that looks like this:
+```
+/---------------------------------------------------\
+|  FINNEGAN - VOICE CONTROLLED DART SCORING SYSTEM  |
+\---------------------------------------------------/
+
+    501
+ => Around the clock
+    Pursuit
+
+Hit all the numbers from 1 to 20 in ascending order. First player to hit 20 wins.
+
+*****************************************
+* Possible things to say:               *
+*                                       *
+* new game             Start a new game *
+* 501                  501              *
+* around the clock     Around the clock *
+* pursuit              Pursuit          *
+*                                       *
+* french               Play in French   *
+*****************************************
+
+I didn't understand: "huh"
+```
+
+<br/>
+<br/>
 
 ## How does it work ?
-The application is divided in two programs. The python program `fart.py` does the speech
-recognition part and the typescript program `finnegan.ts` takes care of the dart scoring.
+The application is divided in two programs. A python program does the speech
+recognition part and a typescript program takes care of the dart scoring as well
+as acting as a game server. On top of it, an html page with plain javascript takes
+care of rendering the games in a nicer way than just the console output.
+
+<br/>
+<br/>
 
 ## The speech recognition part
 `fart.py` is a generic tool that looks for patterns made of tokens, where each
@@ -118,87 +98,74 @@ recognition tool.
 Both the unrecognized speech sequences and the patterns matched by the tool are emitted
 on the standard output with a prefix specified in the configuration file.
 
+<br/>
+<br/>
+
 ## The scoring part
 
-The typescript program `finnegan.ts` is the actual scoring system. It reads the output of
-`fart.py` to fetch the commands and manages the scores.
+The typescript program executed from `./finnegan` is the actual scoring system. It reads the output of
+`fart.py` to fetch the commands and manages the scores. It is also acting as a server that can:
+- serve the html page acting as a UI at `http://localhost:50301/`
+- serve the game state as a json object at `http://localhost:50301/state`
+- accept commands sent by POST requests to `http://localhost:50301/command` (used by the web UI to send
+  commands when clicking on buttons instead of using voice recognition)
+- accept websocket connections at `ws://localhost:50302`. Whenever the server state changes, the json
+  object will be sent as a message to all connected websocket clients
 
-It prints on the console but you can use a fancier web interface if you can run the program
-with `--port <PORT>` to start a web server and then `http://localhost:<PORT>/` in a web
-browser.
-
-And if you want to render it yourself, you can get the game state at any time by doing
-a GET request on `http://localhost:<PORT>/state` that will respond with a json representation
-of the full game state.
-
-For example, if you start the program with `./finnegan --port 5000 501_en.json` and then
-do `curl http://localhost:5000/state`, you will get something like this:
+For example, if you start the program with `./finnegan en.json` and then
+do `curl http://localhost:50301/state`, you will get something like this:
 
 ```json
 {
-  "language": "English",
-  "state": "PLAYING",
-  "turn": 0,
+  "listening": true,
+  "games": [
+    "501",
+    "AROUND_THE_CLOCK",
+    "PURSUIT"
+  ],
+  "selectedGame": "AROUND_THE_CLOCK",
   "possibleThingsToSay": [
     {
-      "command": "QUIT",
-      "textToSay": "\"guinness quit\"",
-      "description": "Quit the program"
+      "command": "NEW_GAME",
+      "textToSay": "new game",
+      "description": "Start a new game"
     },
     {
-      "command": "PAUSE_GAME",
-      "textToSay": "\"guinness pause game\"",
-      "description": "Stop listening for commands until the game is resumed"
+      "command": "501",
+      "textToSay": "501",
+      "description": "501"
     },
     {
-      "command": "STOP_GAME",
-      "textToSay": "\"guinness stop game\"",
-      "description": "Stop the game"
+      "command": "AROUND_THE_CLOCK",
+      "textToSay": "around the clock",
+      "description": "Around the clock"
     },
     {
-      "command": "CORRECTION",
-      "textToSay": "\"guinness correction\"",
-      "description": "Reset the current player's turn"
-    },
-    {
-      "command": "<score>",
-      "textToSay": "<score>",
-      "description": "Report a score like \"seventeen\" or \"double six\""
+      "command": "PURSUIT",
+      "textToSay": "pursuit",
+      "description": "Pursuit"
     }
   ],
-  "alternativeLanguages": {
-    "\"guinness french\"": "Play in French"
+  "alternativeLanguages": [
+    {
+      "command": "LOAD_CONFIG:fr.json",
+      "textToSay": "french",
+      "description": "Play in French"
+    }
+  ],
+  "messageForUser": "Hit all the numbers from 1 to 20 in ascending order. First player to hit 20 wins.",
+  "lastPartOfSpeech": {
+    "text": "around the clock"
   },
-  "difficulty": "easy",
-  "playerStatuses": [
-    {
-      "score": 441,
-      "needADoubleToStart": false,
-      "dartsPlayed": [
-        [
-          {
-            "baseValue": 20,
-            "multiplier": 3,
-            "status": "OK"
-          }
-        ]
-      ]
-    },
-    {
-      "score": 501,
-      "needADoubleToStart": false,
-      "dartsPlayed": []
-    }
-  ],
-  "currentPlayer": 0
-}
-```
+  "wsUrl": "ws://0.0.0.0:50302"
+}```
 
 As you can see, the game state description also contains everything, including a description of the voice commands
 that can be used in the current game state. You can find details about the game state by looking at the
 types defined in `types.ts`.
 
-
+<br/>
+<br/>
 
 ## Credits
 * https://alphacephei.com/vosk/: the awesome library that provides the engine for doing voice recognition
