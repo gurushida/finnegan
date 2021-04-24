@@ -195,16 +195,7 @@
 
 
     function isSelectedGame(state, command) {
-      if (state.gameName === '501') {
-        return command.command === '501';
-      }
-      if (state.gameName === 'AROUND_THE_CLOCK') {
-        return command.command === 'AROUND_THE_CLOCK';
-      }
-      if (state.gameName === 'PURSUIT') {
-        return command.command === 'PURSUIT';
-      }
-      return false;
+      return state.selectedGame === command.command;
     }
 
 
@@ -216,8 +207,7 @@
       }
 
       let html = '';
-      const games = ['501', 'AROUND_THE_CLOCK', 'PURSUIT'];
-      for (const game of games) {
+      for (const game of state.games) {
         if (c = hasCommand(state, game)) {
           const selected = isSelectedGame(state, c);
           html += `<button class='${selected ? 'selectedActionButton' : 'actionButton'}' onclick="postCommand('${c.command}')">${c.textToSay}</button>`;
@@ -231,11 +221,11 @@
     function renderPreStartConfig(state) {
       const root = document.getElementById('preStartConfigRoot');
       root.innerHTML = '';
-      if (state.gameName === '501') {
+      if (state.selectedGame === '501') {
         root.innerHTML = renderPreStartConfig501(state);
-      } else if (state.gameName === 'AROUND_THE_CLOCK') {
+      } else if (state.selectedGame === 'AROUND_THE_CLOCK') {
         root.innerHTML = renderPreStartConfigAroundTheClock(state);
-      } else if (state.gameName === 'PURSUIT') {
+      } else if (state.selectedGame === 'PURSUIT') {
         root.innerHTML = renderPreStartConfigPursuit(state);
       }
     }
@@ -395,15 +385,14 @@
         html += `</table>`;
       }
 
+      // This table is the fallback in case there is a command that this UI doesn't know about
       html += `<table class="speech">`;
       for (const command of state.possibleThingsToSay ?? []) {
         if (commandButtons.includes(command.command)
             || command.command.startsWith('SET_DIFFICULTY_')
             || command.command.startsWith('SET_PLAYER_COUNT_')
             || command.command.startsWith('SCORE_')
-            || command.command === '501'
-            || command.command === 'AROUND_THE_CLOCK'
-            || command.command === 'PURSUIT') {
+            || state.games.includes(command.command)) {
           continue;
         }
 
@@ -436,10 +425,10 @@
     function renderScores(state) {
       const scoreBoardRoot = document.getElementById('scoreBoardRoot');
       scoreBoardRoot.innerHTML = '';
-      if (state.gameName === '501'
-          || state.gameName === 'AROUND_THE_CLOCK'
-          || state.gameName === 'PURSUIT') {
-        scoreBoardRoot.innerHTML = getScoreTableHtml(state.gameName, state.gameEngineState);
+      if (state.selectedGame === '501'
+          || state.selectedGame === 'AROUND_THE_CLOCK'
+          || state.selectedGame === 'PURSUIT') {
+        scoreBoardRoot.innerHTML = getScoreTableHtml(state.selectedGame, state.gameEngineState);
       }
 
       // In case there is not enough room to display all turns,
@@ -448,7 +437,7 @@
     }
 
 
-    function getScoreTableHtml(gameName, gameEngineState) {
+    function getScoreTableHtml(selectedGame, gameEngineState) {
       if (!gameEngineState || !gameEngineState.playerStatuses || gameEngineState.playerStatuses.length === 0) {
         return '';
       }
@@ -475,14 +464,14 @@
         } else {
           html += `<td class="player">&nbsp;&nbsp;${gameEngineState.playerStatuses[p].description}&nbsp;&nbsp;</td>`;
         }
-        if (gameName === '501') {
+        if (selectedGame === '501') {
           html += `<td class="score">${status.score}&nbsp;&nbsp;</td>`;
-        } else if (gameName === 'AROUND_THE_CLOCK') {
+        } else if (selectedGame === 'AROUND_THE_CLOCK') {
           html += `<td class="score">&#9656;${status.targetToHit}&nbsp;&nbsp;</td>`;
-        } else if (gameName === 'PURSUIT') {
+        } else if (selectedGame === 'PURSUIT') {
           html += `<td class="score">${status.location}&#9656;${status.target}&nbsp;&nbsp;</td>`;
         } else {
-          throw `Unsupported game: ${gameName}`;
+          throw `Unsupported game: ${selectedGame}`;
         }
 
         for (let turn = 0; turn <= N_TURNS; turn++) {

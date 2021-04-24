@@ -1,6 +1,6 @@
 import { GameEngine, PlayerStatus } from "./gameengine.ts";
 import { Language } from "./language.ts";
-import { GameName, gameNames, isVoiceCommand, LastPartOfSpeech, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX, VoiceCommand } from "./types.ts";
+import { GameCommand, gameCommands, isVoiceCommand, LastPartOfSpeech, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX, VoiceCommand } from "./types.ts";
 import { readLines } from 'std/io/bufio.ts';
 import { GameEngine501 } from './501.ts';
 import { GameEngineAroundTheClock } from './aroundTheClock.ts';
@@ -15,9 +15,12 @@ interface FinneganState {
     // true if speech recognition is active; false otherwise
     listening: boolean;
 
+    // All possible games
+    games: typeof gameCommands;
+
     // The current selected game if we are on the home screen;
     // the name of the game running otherwise
-    gameName: GameName;
+    selectedGame: GameCommand;
 
     // If not defined, we are on the home screen, waiting to start a game engine.
     // Otherwise, this is a game-specific object describing the state of the engine
@@ -40,7 +43,7 @@ interface FinneganState {
 export class Finnegan {
 
     private fartProcess: Deno.Process | undefined;
-    private gameName: GameName = '501';
+    private selectedGame: GameCommand = '501';
 
     private gameEngine?: GameEngine<PlayerStatus>;
     private possibleThingsToSay: PossibleThingToSay[] = [];
@@ -59,7 +62,8 @@ export class Finnegan {
     public getState(): FinneganState {
         return {
             listening: this.listening,
-            gameName: this.gameName,
+            games: gameCommands,
+            selectedGame: this.selectedGame,
             possibleThingsToSay: this.possibleThingsToSay,
             alternativeLanguages: this.language.getAlternativeLanguages(),
             messageForUser: this.messageForUser,
@@ -113,17 +117,17 @@ export class Finnegan {
 
         if (!this.gameEngine) {
             if (cmd === '501') {
-                this.gameName = '501';
+                this.selectedGame = '501';
             } else if (cmd === 'AROUND_THE_CLOCK') {
-                this.gameName = 'AROUND_THE_CLOCK';
+                this.selectedGame = 'AROUND_THE_CLOCK';
             } else if (cmd === 'PURSUIT') {
-                this.gameName = 'PURSUIT';
+                this.selectedGame = 'PURSUIT';
             } else if (cmd === 'NEW_GAME') {
-                if (this.gameName === '501') {
+                if (this.selectedGame === '501') {
                     this.gameEngine = new GameEngine501();
-                } else if (this.gameName === 'AROUND_THE_CLOCK') {
+                } else if (this.selectedGame === 'AROUND_THE_CLOCK') {
                     this.gameEngine = new GameEngineAroundTheClock();
-                } else if (this.gameName === 'PURSUIT') {
+                } else if (this.selectedGame === 'PURSUIT') {
                     this.gameEngine = new GameEnginePursuit();
                 }
             }
@@ -229,8 +233,8 @@ export class Finnegan {
         console.log();
 
         if (!this.gameEngine) {
-            for (const game of gameNames) {
-                console.log(`${(game === this.gameName) ? ' => ' : '    '}${this.language.msg(game)}`);
+            for (const game of gameCommands) {
+                console.log(`${(game === this.selectedGame) ? ' => ' : '    '}${this.language.msg(game)}`);
             }
         } else {
             this.gameEngine.renderForConsole(this.language);

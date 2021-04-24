@@ -1,12 +1,12 @@
-export const gameNames = ['501', 'AROUND_THE_CLOCK', 'PURSUIT'] as const;
-export type GameName = typeof gameNames[number];
+export const gameCommands = ['501', 'AROUND_THE_CLOCK', 'PURSUIT'] as const;
+export type GameCommand = typeof gameCommands[number];
 
 /**
  * The MessageId type describes the IDs of all the text messages
  * that can be presented to the user. 
  */
 export const messageIDs = [
-    ...gameNames,
+    ...gameCommands,
     'DIFFICULTY',
     'EASY',
     'MEDIUM',
@@ -66,9 +66,7 @@ export const SWITCH_LANGUAGE_COMMAND_PREFIX = "LOAD_CONFIG:"
  * by fart.py
  */
 export const voiceCommands = [
-    '501',
-    'AROUND_THE_CLOCK',
-    'PURSUIT',
+    ...gameCommands,
     'NEW_GAME',
     'STOP_GAME',
     'PAUSE_GAME',

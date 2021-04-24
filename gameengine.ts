@@ -1,6 +1,6 @@
 import { Language } from './language.ts';
 import { VoiceCommand, DartBaseValue, DartStatus, DartMultiplier,
-    Answer, GameEvent, GameName, DartPlayed, State } from "./types.ts";
+    Answer, GameEvent, DartPlayed, State, GameCommand } from "./types.ts";
 
 
 // Global number of players, since it is quite likely
@@ -32,7 +32,7 @@ export abstract class GameEngine<PS extends PlayerStatus> {
     // the winner in the playerStatuses array
     winner?: number;
 
-    constructor(readonly game: GameName, public numberOfPlayers: number) {}
+    constructor(readonly game: GameCommand, public numberOfPlayers: number) {}
 
     abstract createPlayer(playerIndex: number): PS;
 
