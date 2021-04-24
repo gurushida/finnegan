@@ -151,6 +151,11 @@ export class Finnegan {
     private updateMessageForUser() {
         this.messageForUser = undefined;
         if (!this.gameEngine) {
+            switch(this.selectedGame) {
+                case '501': this.messageForUser = this.language.msg('RULES_501'); break;
+                case 'AROUND_THE_CLOCK': this.messageForUser = this.language.msg('RULES_AROUND_THE_CLOCK'); break;
+                case 'PURSUIT': this.messageForUser = this.language.msg('RULES_PURSUIT'); break;
+            }
             return;
         }
 

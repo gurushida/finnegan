@@ -130,6 +130,3 @@ const finnegan = new Finnegan(language, useFart, device, samplerate);
 if (port !== undefined) {
     new Server(port, finnegan);
 }
-
-
-

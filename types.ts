@@ -51,6 +51,9 @@ export const messageIDs = [
     'HOUND',
     'THE_HARE_WON',
     'THE_HARE_LOST',
+    'RULES_501',
+    'RULES_AROUND_THE_CLOCK',
+    'RULES_PURSUIT',
 ] as const;
 export type MessageId = typeof messageIDs[number];
 

@@ -1,6 +1,9 @@
 {
     "language": "Français",
     "messages": {
+        "RULES_501": "Le premier à 0 gagne. En mode expert, les joueurs doivent commencer par un double. En mode expert ou moyen, les joueurs doivent finir par un double.",
+        "RULES_AROUND_THE_CLOCK": "Les joueurs doivent toucher chaque numéro de 1 à 20 dans l'ordre croissant. Le premier à 20 gagne.",
+        "RULES_PURSUIT": "Le premier joueur est le lièvre et démarre sur le 20. Les autres sont les chiens et démarrent sur le 12. Les joueurs doivent toucher les numéros dans le sens des aiguilles d'une montre. Les chiens gagnent si l'un d'eux rattrape le lièvre. Le lièvre gagne s'il atteint le 20 sans être rattrapé.",
         "DIFFICULTY": "Niveau",
         "EASY": "facile",
         "MEDIUM": "moyen",

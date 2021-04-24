@@ -1,6 +1,9 @@
 {
     "language": "English",
     "messages": {
+        "RULES_501": "First player to 0 wins. In expert mode, you need a double to start. In expert or medium mode, you need to end with a double.",
+        "RULES_AROUND_THE_CLOCK": "Hit all the numbers from 1 to 20 in ascending order. First player to hit 20 wins.",
+        "RULES_PURSUIT": "First player is the hare and start on number 20. Others are the hounds and start on number 12. Players must hit all numbers one by one clockwise. If one of the hounds catches up on the hare, the hounds win. If the hare makes it back to 20 without being caught, they wins.",
         "DIFFICULTY": "Difficulty",
         "EASY": "easy",
         "MEDIUM": "medium",
