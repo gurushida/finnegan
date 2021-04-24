@@ -1,5 +1,5 @@
-import { GameEngine, PlayerStatus } from "./gameengine.ts";
-import { Language } from "./language.ts";
+import { GameEngine, PlayerStatus } from './gameengine.ts';
+import { Language } from './language.ts';
 import { GameCommand, gameCommands, isVoiceCommand, LastPartOfSpeech, PossibleThingToSay, SWITCH_LANGUAGE_COMMAND_PREFIX, VoiceCommand } from "./types.ts";
 import { readLines } from 'std/io/bufio.ts';
 import { GameEngine501 } from './501.ts';

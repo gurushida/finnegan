@@ -58,12 +58,12 @@ export class FinneganServer {
                 (request.url === '' || request.url === '/' || request.url.endsWith('.html'))) {
                 let file: string;
                 if (request.url === '' || request.url === '/') {
-                    file = 'finnegan.html';
+                    file = '/finnegan.html';
                 } else {
-                    file = request.url.substring(1);
+                    file = request.url;
                 }
                 try {
-                    const html = await Deno.readTextFile(file);
+                    const html = await Deno.readTextFile(`webui${file}`);
                     const headers = new Headers();
                     headers.append('Content-Type', 'text/html');
                     request.respond({
@@ -80,7 +80,7 @@ export class FinneganServer {
             } else if (request.method === 'GET' && (request.url === '/dartboard.svg'
                        || request.url === '/microphone-on.svg'
                        || request.url === '/microphone-off.svg')) {
-                const svg = await Deno.readTextFile(request.url.substring(1));
+                const svg = await Deno.readTextFile(`webui/${request.url}`);
                 const headers = new Headers();
                 headers.append('Content-Type', 'image/svg+xml');
                 request.respond({

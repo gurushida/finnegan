@@ -16,4 +16,4 @@
 # --unstable is for using kill() to stop the recognition process
 # --allow-net is for starting the web server if the --port option is used
 
-deno run  --quiet --import-map import_map.json --allow-read --allow-run --unstable --allow-net main.ts $*
+deno run  --quiet --import-map import_map.json --allow-read --allow-run --unstable --allow-net src/main.ts $*
