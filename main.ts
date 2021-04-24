@@ -3,9 +3,12 @@ import { Server } from './server.ts';
 import { Finnegan } from './finnegan.ts';
 
 
+const DEFAULT_PORT = 50301;
+
+
 let device: string|undefined;
 let samplerate: string|undefined;
-let port: number | undefined;
+let port: number | undefined = DEFAULT_PORT;
 let useFart = true;
 
 
@@ -14,6 +17,8 @@ function printUsage() {
     console.log('Usage: finnegan [OPTIONS] <config>');
     console.log();
     console.log('Starts the game engine that begins to listen for voice commands, using the given json configuration file.');
+    console.log(`Also starts a web server on port ${DEFAULT_PORT} to serve the game state and a web UI and also to receive`);
+    console.log('game commands via POST requests.');
     console.log();
     console.log('OPTIONS:');
     console.log('  --list-devices   Runs "python3 fart.py -l" to show the available audio devices');
@@ -23,11 +28,11 @@ function printUsage() {
     console.log();
     console.log('  --no-recognition');
     console.log('           Runs without the speech recognition. All commands must be sent via the web server.');
-    console.log('           Requires the --port option');
+    console.log('           Requires the web server to run');
     console.log();
     console.log('  --port PORT');
-    console.log('           If specified, starts a web server that listens to the given port and');
-    console.log('           replies to http request with the current game state in json format');
+    console.log(`           Specifies the port to use for the web server instead of the default ${DEFAULT_PORT}.`);
+    console.log('           Use "--port none" to disable the web server');
     console.log();
     console.log('  --device D');
     console.log('           Specifies the audio device parameter to be passed to fart.py');
@@ -69,7 +74,11 @@ async function parseArguments(): Promise<string> {
                 Deno.exit(1);
             }
             const argValue = args[i++];
-                port = parseInt(argValue);
+            if (argValue === 'none') {
+                port = undefined;
+                continue;
+            }
+            port = parseInt(argValue);
             if (isNaN(port) || port < 1024 || port > 65635) {
                 console.error(`Invalid ${arg} argument: ${argValue}`);
                 Deno.exit(1);
