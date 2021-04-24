@@ -34,7 +34,6 @@ To run this application, you need `python3` >= 3.6, `pip3` >= 10, and [deno](htt
 On MacOS, you need to make sure the Terminal is allowed to access your microphone. 
 
 <br/>
-<br/>
 
 ## How to run it
 Run `./install_dependencies.sh ` to install the dependencies, i.e. the python modules and data models needed
@@ -70,7 +69,6 @@ I didn't understand: "huh"
 ```
 
 <br/>
-<br/>
 
 ## How does it work ?
 The application is divided in two programs. A python program does the speech
@@ -78,7 +76,6 @@ recognition part and a typescript program takes care of the dart scoring as well
 as acting as a game server. On top of it, an html page with plain javascript takes
 care of rendering the games in a nicer way than just the console output.
 
-<br/>
 <br/>
 
 ## The speech recognition part
@@ -98,7 +95,6 @@ recognition tool.
 Both the unrecognized speech sequences and the patterns matched by the tool are emitted
 on the standard output with a prefix specified in the configuration file.
 
-<br/>
 <br/>
 
 ## The scoring part
@@ -158,7 +154,8 @@ do `curl http://localhost:50301/state`, you will get something like this:
     "text": "around the clock"
   },
   "wsUrl": "ws://0.0.0.0:50302"
-}```
+}
+```
 
 As you can see, the game state description also contains everything, including a description of the voice commands
 that can be used in the current game state. You can find details about the game state by looking at the
