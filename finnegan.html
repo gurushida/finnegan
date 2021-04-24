@@ -483,7 +483,7 @@
               const baseValue = darts[dart].baseValue;
               const multiplier = darts[dart].multiplier;
               if (baseValue === 0) {
-                dartDescription = '-';
+                dartDescription = '0';
               } else if (baseValue === 25 && multiplier === 2) {
                 dartDescription = '50';
                 ignored = darts[dart].status !== 'OK';
