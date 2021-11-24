@@ -171,7 +171,7 @@ export class Finnegan {
 
     private stopFart() {
         if (this.fartProcess) {
-            this.fartProcess.kill(9);
+            this.fartProcess.kill("SIGKILL");
             this.fartProcess = undefined;
         }
     }
