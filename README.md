@@ -30,7 +30,7 @@ if you missed the board and it keeps the score for you:
 <br/>
 
 ## Dependencies
-To run this application, you need `python3` >= 3.6, `pip3` >= 10, and [deno](https://deno.land/#installation) >= 1.9.
+To run this application, you need `python3` >= 3.6, `pip3` >= 10, and [deno](https://deno.land/#installation) >= 1.16.2.
 On MacOS, you need to make sure the Terminal is allowed to access your microphone. 
 
 <br/>
